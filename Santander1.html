@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - Aula 01: Lógica com Python</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            padding: 2rem 1rem;
+        }
+
+        .quiz-wrapper {
+            max-width: 48rem;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .header-title p {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .question-counter {
+            background-color: #eef2ff;
+            color: #4f46e5;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.625rem;
+            background-color: #e2e8f0;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #4f46e5;
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+            color: #1e293b;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 2px solid #e2e8f0;
+            background: white;
+            color: #334155;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #a5b4fc;
+            background-color: #eef2ff;
+        }
+
+        .option-btn.selected {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+            color: #3730a3;
+            box-shadow: 0 0 0 1px #4f46e5;
+        }
+
+        .option-btn.correct {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+            color: #166534;
+            box-shadow: 0 0 0 1px #22c55e;
+        }
+
+        .option-btn.incorrect {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+            color: #991b1b;
+            box-shadow: 0 0 0 1px #ef4444;
+        }
+
+        .option-btn.disabled-option {
+            border-color: #e2e8f0;
+            opacity: 0.5;
+            color: #64748b;
+            cursor: default;
+        }
+
+        .option-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Controls */
+        .controls-section {
+            border-top: 1px solid #f1f5f9;
+            padding-top: 1.5rem;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .hint-btn {
+            background: none;
+            border: none;
+            color: #4f46e5;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .hint-btn:hover {
+            color: #3730a3;
+        }
+
+        .confirm-btn, .next-btn {
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .confirm-btn {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .confirm-btn:hover:not(:disabled) {
+            background-color: #4338ca;
+        }
+
+        .confirm-btn:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .next-btn {
+            background-color: #0f172a;
+            color: white;
+        }
+
+        .next-btn:hover {
+            background-color: #1e293b;
+        }
+
+        /* Feedback Box */
+        .feedback-box {
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct-feedback {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+
+        .feedback-box.incorrect-feedback {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+
+        .feedback-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .correct-feedback .feedback-title {
+            color: #166534;
+        }
+
+        .incorrect-feedback .feedback-title {
+            color: #991b1b;
+        }
+
+        .feedback-rationale {
+            color: #334155;
+        }
+
+        .feedback-rationale span {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Hint Box */
+        .hint-box {
+            margin-top: 1rem;
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .hint-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            color: #d97706;
+        }
+
+        /* Results Screen */
+        .results-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .results-card {
+            background: white;
+            max-width: 42rem;
+            width: 100%;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid #f1f5f9;
+        }
+
+        .results-icon {
+            width: 6rem;
+            height: 6rem;
+            background-color: #eef2ff;
+            color: #4f46e5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .results-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #0f172a;
+        }
+
+        .results-subtitle {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        .results-score {
+            font-size: 3.75rem;
+            font-weight: 800;
+            color: #4f46e5;
+            margin-bottom: 1rem;
+        }
+
+        .results-score span {
+            font-size: 1.5rem;
+            color: #94a3b8;
+        }
+
+        .results-message {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .restart-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 1rem;
+        }
+
+        .restart-btn:hover {
+            background-color: #4338ca;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(0.25rem);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .question-text {
+                font-size: 1.1rem;
+            }
+            
+            .controls-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .confirm-btn, .next-btn {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .question-counter {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        const quizData = [
+            {
+                question: "De acordo com as explicações e curiosidades trazidas pelo professor na aula, qual foi o propósito original para o qual os computadores foram inventados?",
+                options: [
+                    { text: "Para resolver problemas complexos de matemática e física.", isCorrect: true, rationale: "O professor menciona filmes como 'O Jogo da Imitação' e 'Estrelas Além do Tempo' para ilustrar que os computadores e algoritmos nasceram para resolver equações e quebrar criptografias." },
+                    { text: "Para criar sites, aplicativos de celular e redes sociais.", isCorrect: false, rationale: "Embora usemos computadores para isso hoje, o professor destaca que este não foi o seu propósito original." },
+                    { text: "Para processar planilhas financeiras de grandes empresas.", isCorrect: false, rationale: "O uso corporativo financeiro veio depois; a origem está ligada à matemática, física e criptografia." },
+                    { text: "Para ensinar lógica de programação para estudantes de tecnologia.", isCorrect: false, rationale: "O ensino de programação é um subproduto do desenvolvimento da computação, não a sua razão de existir inicial." }
+                ],
+                hint: "Lembre-se dos filmes mencionados no início da aula (como as 'computadoras' da NASA)."
+            },
+            {
+                question: "Como o professor define o que é um 'algoritmo' de forma simples para quem está começando?",
+                options: [
+                    { text: "Um código escrito obrigatoriamente na linguagem Python que realiza cálculos matemáticos.", isCorrect: false, rationale: "Algoritmos não dependem de uma linguagem de programação específica, muito menos apenas de Python." },
+                    { text: "Um mecanismo de inteligência artificial usado pelas redes sociais para recomendar vídeos.", isCorrect: false, rationale: "Ele desmistifica isso afirmando que inteligência artificial e algoritmos puros são coisas diferentes." },
+                    { text: "Uma sequência de passos pré-determinada, como uma receita de bolo, que não precisa de um computador para existir.", isCorrect: true, rationale: "O professor enfatiza que algoritmos existem independentemente de linguagens de programação ou máquinas físicas, sendo apenas uma série de passos lógicos." },
+                    { text: "Uma peça de hardware instalada dentro da memória do computador para acelerar processos.", isCorrect: false, rationale: "Algoritmo é um conceito lógico (software/ideia), não um componente físico (hardware)." }
+                ],
+                hint: "Pense no exemplo que ele deu sobre ordenar números no papel ou arrumar os livros."
+            },
+            {
+                question: "Para provar que todos já executam algoritmos no dia a dia sem perceber, qual exemplo prático o professor utilizou?",
+                options: [
+                    { text: "Calcular a rota mais rápida no GPS para ir ao trabalho.", isCorrect: false, rationale: "Apesar de ser um ótimo exemplo de algoritmo de rotas, não foi a analogia utilizada por ele na aula." },
+                    { text: "Ordenar os livros do Harry Potter na sequência correta.", isCorrect: true, rationale: "Ele usou a história de ordenar os livros de sua saga favorita para explicar o algoritmo de ordenação chamado 'Selection Sort'." },
+                    { text: "Fazer uma receita de bolo de chocolate passo a passo.", isCorrect: false, rationale: "Ele mencionou 'receita de bolo' genericamente, mas o exemplo desenvolvido na lousa foi a ordenação de livros/números." },
+                    { text: "Adivinhar a senha do Wi-Fi tentando várias combinações.", isCorrect: false, rationale: "Isso seria um algoritmo de 'força bruta', o exemplo da aula foi sobre ordenar elementos." }
+                ],
+                hint: "O professor comentou que é 'nerd' e citou uma famosa saga de fantasia sobre bruxos."
+            },
+            {
+                question: "O professor executou o clássico momento 'histórico na vida' de todo programador: mostrar uma mensagem na tela. Qual é o comando utilizado em Python para isso?",
+                options: [
+                    { text: "mostrar()", isCorrect: false, rationale: "Python é uma linguagem com comandos baseados no inglês; não usamos comandos traduzidos para o português." },
+                    { text: "input()", isCorrect: false, rationale: "A função input() serve para RECEBER dados do usuário, não para ser a ferramenta principal de exibição." },
+                    { text: "display()", isCorrect: false, rationale: "Embora a palavra signifique exibir, o comando padrão do Python para saídas básicas no terminal é outro." },
+                    { text: "print()", isCorrect: true, rationale: "Em Python, a função print() é usada para exibir saídas (textos, variáveis, números) na tela do console." }
+                ],
+                hint: "Pense na palavra em inglês que também é usada quando queremos enviar um documento para a impressora."
+            },
+            {
+                question: "Por que o professor recomenda salvar dados em variáveis em vez de digitar o mesmo texto diretamente várias vezes ao longo do código?",
+                options: [
+                    { text: "Porque o Python bloqueia a execução se você escrever o mesmo texto solto mais de três vezes.", isCorrect: false, rationale: "A linguagem Python não tem nenhuma restrição quanto à repetição de textos estáticos no código." },
+                    { text: "Para facilitar a manutenção: mudando o valor da variável em um único lugar, a alteração se aplica a todos os locais onde ela é usada.", isCorrect: true, rationale: "Ele ilustrou isso mostrando a dificuldade de adicionar exclamações ('!') manualmente em dezenas de mensagens." },
+                    { text: "Porque variáveis fazem o código rodar com o tema escuro na IDE.", isCorrect: false, rationale: "O tema escuro da interface (IDE) é uma configuração visual do programa, não tem relação com o uso de variáveis." },
+                    { text: "Para que o usuário final precise digitar a senha para acessar o programa.", isCorrect: false, rationale: "Variáveis servem para armazenar dados em memória. Senhas requerem lógicas de validação adicionais." }
+                ],
+                hint: "Lembre-se do momento em que ele fingiu estar muito feliz e precisou colocar '!!!' em vários 'Hello World'."
+            },
+            {
+                question: "Na aula, o professor usou a função type() para mostrar tipos de dados. Como o Python classifica textos que estão envolvidos por aspas?",
+                options: [
+                    { text: "int (Integer)", isCorrect: false, rationale: "A classe 'int' é usada pelo Python para representar números inteiros." },
+                    { text: "txt (Text)", isCorrect: false, rationale: "A abreviação oficial da classe no Python para textos é str, e não txt." },
+                    { text: "str (String)", isCorrect: true, rationale: "No Python, qualquer sequência de caracteres cercada por aspas (simples ou duplas) é interpretada como uma 'string' (cadeia de caracteres)." },
+                    { text: "char (Character)", isCorrect: false, rationale: "Em Python não existe um tipo separado só para um caractere (char), tudo é tratado como String (str)." }
+                ],
+                hint: "A nomenclatura usada na programação vem do termo em inglês para 'fio' ou 'cordão' de letras."
+            },
+            {
+                question: "Para não apagar o histórico da aula, o professor decidiu inutilizar temporariamente algumas linhas de código. Qual caractere ele usou para criar esse 'comentário'?",
+                options: [
+                    { text: "// (Barras duplas)", isCorrect: false, rationale: "Essas barras são usadas para comentários em outras linguagens (como JavaScript e Java), mas não no Python." },
+                    { text: "/* (Barra e asterisco)", isCorrect: false, rationale: "Este símbolo é utilizado para criar comentários de múltiplas linhas em linguagens como C ou CSS." },
+                    { text: "# (Hashtag / Jogo da velha)", isCorrect: true, rationale: "No Python, tudo o que é escrito após uma hashtag na mesma linha é ignorado pelo interpretador." },
+                    { text: "<!-- (Sinal de menor, exclamação e traços)", isCorrect: false, rationale: "Esta é a sintaxe usada para comentários na linguagem de marcação HTML." }
+                ],
+                hint: "O símbolo utilizado é muito famoso nas redes sociais para criar 'tags'."
+            },
+            {
+                question: 'Ao criar a calculadora, o professor utilizou: print(f"O resultado de A + B é {A+B}"). O que a letra \'f\' no início da string indica para o Python?',
+                options: [
+                    { text: "Que a frase deve ser ignorada se der erro, pois o 'f' significa 'fail-safe'.", isCorrect: false, rationale: "O Python não tem um caractere para evitar o travamento do código na própria string." },
+                    { text: "Que é uma string formatada (f-string), permitindo que variáveis e operações entre chaves sejam avaliadas e exibidas no texto.", isCorrect: true, rationale: "O 'f' vem de 'formatação'. Ele avisa ao Python que dentro daquele texto existem chaves {} contendo variáveis que precisam ser resolvidas." },
+                    { text: "Que a mensagem deve ser impressa no final do programa, com 'f' indicando 'final'.", isCorrect: false, rationale: "A ordem de impressão segue o fluxo em que o código foi escrito. O 'f' não muda isso." },
+                    { text: "Que o que está entre aspas deve ser transformado obrigatoriamente num número decimal.", isCorrect: false, rationale: "O 'f' ali é apenas para formatar strings. Para converter um dado em decimal, usaríamos a função float()." }
+                ],
+                hint: "O professor mencionou que essa letra faz a distinção vital para o computador entender a diferença entre o caractere comum 'A' e o conteúdo da variável '{A}'."
+            },
+            {
+                question: "Quando o professor tentou somar os números 5 e 8 recebidos pelo comando input(), o resultado na tela foi '58'. Qual lição sobre a máquina ele ensinou com esse 'erro'?",
+                options: [
+                    { text: "O Python possui um bug conhecido em calculadoras, onde ele ignora o operador matemático de soma.", isCorrect: false, rationale: "O Python é altamente confiável. O resultado ocorreu devido à natureza do tipo de dado (texto)." },
+                    { text: "O Google Colab demora para processar dados matemáticos, então ele apenas uniu os números temporariamente.", isCorrect: false, rationale: "As IDEs processam as informações na hora de acordo com as regras da linguagem." },
+                    { text: "Foi um problema na memória RAM do computador que não conseguiu alocar espaço para o número 13.", isCorrect: false, rationale: "Computadores modernos lidam com bilhões de operações matemáticas; a soma de 5 e 8 não impacta hardware." },
+                    { text: "O computador não fez nada de errado; ele apenas concatenou os valores, pois todo input é recebido como texto por padrão.", isCorrect: true, rationale: "O professor ensinou que a máquina sempre obedece às instruções e que é papel do programador avisar se o dado for um número." }
+                ],
+                hint: "Lembre-se da frase: 'Sempre que o código deu errado, a culpa é sua, infelizmente, porque o computador só segue os passos que você mandou'."
+            },
+            {
+                question: "Para corrigir o problema do '58' e fazer a calculadora somar matematicamente resultando em 13, qual função de conversão o professor usou envolvendo o input?",
+                options: [
+                    { text: "math()", isCorrect: false, rationale: "Não existe a função nativa math() para conversão. 'math' é o nome de uma biblioteca com fórmulas matemáticas." },
+                    { text: "int()", isCorrect: true, rationale: "A função int() converte o tipo string (texto) retornado pelo input() em um tipo integer (número inteiro), permitindo cálculos corretos." },
+                    { text: "str()", isCorrect: false, rationale: "A função str() faz exatamente o oposto: transforma um número em texto (string)." },
+                    { text: "num()", isCorrect: false, rationale: "Embora fizesse sentido intuitivo, a palavra reservada na linguagem Python para números sem vírgulas é int." }
+                ],
+                hint: "Ele usou a abreviação da palavra em inglês 'integer', que significa 'inteiro'."
+            }
+        ];
+
+        // State
+        let currentQuestionIndex = 0;
+        let selectedOption = null;
+        let isAnswerConfirmed = false;
+        let score = 0;
+        let showResults = false;
+        let showHint = false;
+
+        function render() {
+            const app = document.getElementById('app');
+            
+            if (showResults) {
+                app.innerHTML = renderResults();
+            } else {
+                app.innerHTML = renderQuiz();
+            }
+            
+            attachEventListeners();
+        }
+
+        function renderResults() {
+            const percentage = Math.round((score / quizData.length) * 100);
+            let message = "";
+            if (percentage === 100) message = "Perfeito! Você dominou todos os conceitos da aula.";
+            else if (percentage >= 70) message = "Muito bem! Você tem um ótimo entendimento inicial.";
+            else if (percentage >= 50) message = "Bom começo! Mas vale a pena revisar a aula para fixar melhor os conceitos.";
+            else message = "Não desanime! A programação exige prática. Tente assistir a aula novamente.";
+
+            return `
+                <div class="results-container">
+                    <div class="results-card">
+                        <div class="results-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                        </div>
+                        <h2 class="results-title">Resultado do Teste</h2>
+                        <p class="results-subtitle">Fundamentos de Programação e Lógica com Python</p>
+                        
+                        <div class="results-score">
+                            ${score} <span>/ ${quizData.length}</span>
+                        </div>
+                        <p class="results-message">${message}</p>
+                        
+                        <button class="restart-btn" id="restartBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <polyline points="23 20 23 14 17 14"></polyline>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                            </svg>
+                            Refazer Teste
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderQuiz() {
+            const currentQuestion = quizData[currentQuestionIndex];
+            const progressWidth = ((currentQuestionIndex + 1) / quizData.length) * 100;
+
+            let optionsHTML = currentQuestion.options.map((option, index) => {
+                let btnClass = 'option-btn';
+                let iconHTML = '';
+
+                if (isAnswerConfirmed) {
+                    if (option.isCorrect) {
+                        btnClass += ' correct';
+                        iconHTML = `<svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+                    } else if (selectedOption === index) {
+                        btnClass += ' incorrect';
+                        iconHTML = `<svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+                    } else {
+                        btnClass += ' disabled-option';
+                    }
+                } else if (selectedOption === index) {
+                    btnClass += ' selected';
+                }
+
+                return `
+                    <button class="${btnClass}" data-index="${index}" ${isAnswerConfirmed ? 'disabled' : ''}>
+                        <span>${option.text}</span>
+                        ${iconHTML}
+                    </button>
+                `;
+            }).join('');
+
+            let controlsHTML = '';
+            if (!isAnswerConfirmed) {
+                controlsHTML = `
+                    <div class="controls-row">
+                        <button class="hint-btn" id="hintBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 18h6"></path>
+                                <path d="M10 22h4"></path>
+                                <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                            </svg>
+                            ${showHint ? 'Esconder Dica' : 'Ver Dica'}
+                        </button>
+                        <button class="confirm-btn" id="confirmBtn" ${selectedOption === null ? 'disabled' : ''}>
+                            Confirmar Resposta
+                        </button>
+                    </div>
+                `;
+            } else {
+                const selectedOpt = currentQuestion.options[selectedOption];
+                controlsHTML = `
+                    <div class="feedback-box ${selectedOpt.isCorrect ? 'correct-feedback' : 'incorrect-feedback'}">
+                        <h3 class="feedback-title">${selectedOpt.isCorrect ? '🎉 Resposta Correta!' : '❌ Resposta Incorreta'}</h3>
+                        <p class="feedback-rationale">
+                            <span>Explicação do Professor:</span>
+                            ${selectedOpt.rationale}
+                        </p>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button class="next-btn" id="nextBtn">
+                            ${currentQuestionIndex < quizData.length - 1 ? 'Próxima Pergunta' : 'Ver Resultado Final'}
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }
+
+            let hintHTML = '';
+            if (showHint && !isAnswerConfirmed) {
+                hintHTML = `
+                    <div class="hint-box">
+                        <svg class="hint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18h6"></path>
+                            <path d="M10 22h4"></path>
+                            <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                        </svg>
+                        <p>${currentQuestion.hint}</p>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="container">
+                    <div class="quiz-wrapper">
+                        <div class="header">
+                            <div class="header-top">
+                                <div class="header-title">
+                                    <h1>Aula 01: Lógica com Python</h1>
+                                    <p>Trilha de IA e Dados</p>
+                                </div>
+                                <div class="question-counter">
+                                    Questão ${currentQuestionIndex + 1} de ${quizData.length}
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progressWidth}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="question-card">
+                            <h2 class="question-text">${currentQuestion.question}</h2>
+                            <div class="options-list">
+                                ${optionsHTML}
+                            </div>
+                            <div class="controls-section">
+                                ${controlsHTML}
+                                ${hintHTML}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function attachEventListeners() {
+            // Option buttons
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (isAnswerConfirmed) return;
+                    const index = parseInt(this.getAttribute('data-index'));
+                    selectedOption = index;
+                    render();
+                });
+            });
+
+            // Hint button
+            const hintBtn = document.getElementById('hintBtn');
+            if (hintBtn) {
+                hintBtn.addEventListener('click', () => {
+                    showHint = !showHint;
+                    render();
+                });
+            }
+
+            // Confirm button
+            const confirmBtn = document.getElementById('confirmBtn');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', () => {
+                    if (selectedOption === null) return;
+                    isAnswerConfirmed = true;
+                    if (quizData[currentQuestionIndex].options[selectedOption].isCorrect) {
+                        score++;
+                    }
+                    render();
+                });
+            }
+
+            // Next button
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    if (currentQuestionIndex < quizData.length - 1) {
+                        currentQuestionIndex++;
+                        selectedOption = null;
+                        isAnswerConfirmed = false;
+                        showHint = false;
+                        render();
+                    } else {
+                        showResults = true;
+                        render();
+                    }
+                });
+            }
+
+            // Restart button
+            const restartBtn = document.getElementById('restartBtn');
+            if (restartBtn) {
+                restartBtn.addEventListener('click', () => {
+                    currentQuestionIndex = 0;
+                    selectedOption = null;
+                    isAnswerConfirmed = false;
+                    score = 0;
+                    showResults = false;
+                    showHint = false;
+                    render();
+                });
+            }
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>

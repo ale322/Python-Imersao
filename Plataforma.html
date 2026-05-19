@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imersão Santander 2026 - Área do Aluno</title>
+    
+    <style>
+        /* --- Reset Básico e Utilitários --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f7f9fb; color: #333; -webkit-font-smoothing: antialiased; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+        /* --- Cabeçalho --- */
+        .main-header { background-color: #ffffff; padding: 15px 0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
+        .header-container { display: flex; justify-content: space-between; align-items: center; }
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .logo-img { height: 40px; }
+        .brand-title { font-size: 1.5rem; font-weight: 700; color: #1a1a1a; }
+        .subtitle { font-size: 0.9rem; color: #666; margin-top: -3px; }
+        .admin-link { text-decoration: none; color: #666; font-size: 0.95rem; transition: color 0.2s; }
+        .admin-link:hover { color: #ec1c24; }
+
+        /* --- Conteúdo Principal --- */
+        .main-content { padding: 60px 0; }
+        .hero-section { text-align: center; margin-bottom: 50px; }
+        .main-title { font-size: 3.2rem; font-weight: 800; color: #1a1a1a; letter-spacing: -1.5px; margin-bottom: 15px; }
+        .highlight-red { color: #ec1c24; }
+        .main-description { font-size: 1.3rem; color: #8c99a8; max-width: 700px; margin: 0 auto; line-height: 1.5; }
+
+        /* --- Área de Cards --- */
+        .cards-area { background-color: #ffffff; border: 1px solid #e1e8ed; border-radius: 16px; padding: 40px; min-height: 300px;}
+        
+        /* Estado Vazio */
+        .empty-state { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 40px 0; }
+        .file-icon { width: 60px; height: 60px; }
+        .empty-text { font-size: 1.1rem; color: #8c99a8; max-width: 500px; line-height: 1.5; }
+
+        /* Grid de Cards Dinâmicos */
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; display: none; }
+        
+        /* Estilo Individual do Card */
+        .card { background: #ffffff; border: 2px solid #f1f5f9; border-radius: 12px; padding: 25px; text-decoration: none; color: inherit; transition: all 0.2s ease; display: flex; flex-direction: column; gap: 15px; cursor: pointer; }
+        .card:hover { border-color: #ec1c24; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        
+        /* Alinhamento da Tag e da Data no topo do Card */
+        .card-header { display: flex; justify-content: space-between; align-items: center; }
+        .card-tag { background: #fee2e2; color: #dc2626; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .card-date { color: #64748b; font-size: 0.85rem; font-weight: 500; }
+        
+        .card-title { font-size: 1.2rem; font-weight: 600; color: #1e293b; line-height: 1.4; }
+        .card-action { margin-top: auto; color: #ec1c24; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+
+        /* --- Visualizador de Conteúdo Embutido (Iframe) --- */
+        .viewer-container { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease; }
+        .btn-back { align-self: flex-start; background-color: #0f172a; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; transition: background 0.2s; }
+        .btn-back:hover { background-color: #1e293b; }
+        .content-frame { width: 100%; height: 78vh; border: 1px solid #e2e8f0; border-radius: 12px; background: white; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Responsividade (Dispositivos Móveis) --- */
+        @media (max-width: 768px) {
+            .header-container { flex-direction: column; gap: 15px; text-align: center; }
+            .main-content { padding: 30px 0; }
+            .hero-section { margin-bottom: 30px; }
+            .cards-area { padding: 20px; }
+            .main-title { font-size: 2.2rem; }
+            .main-description { font-size: 1.1rem; }
+            .content-frame { height: 70vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="container header-container">
+            <div class="logo-area">
+                <img src="https://logodownload.org/wp-content/uploads/2014/05/santander-logo-11.png" alt="Logo Santander" class="logo-img">
+                <div class="titles">
+                    <h1 class="brand-title">Santander</h1>
+                    <p class="subtitle">Imersão 2026</p>
+                </div>
+            </div>
+            
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            
+            <div id="portalIntro">
+                <section class="hero-section">
+                    <h2 class="main-title">Imersão Santander <span class="highlight-red">2026</span></h2>
+                    <p class="main-description">Quiz da imersão, teste o que aprendeu. Clique em um card para abrir.</p>
+                </section>
+            </div>
+
+            <section class="cards-area">
+                <div class="empty-state" id="emptyState">
+                    <svg class="file-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z" stroke="#8c99a8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M13 2V9H20" stroke="#8c99a8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 13H8" stroke="#8c99a8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 17H8" stroke="#8c99a8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10 9H9H8" stroke="#8c99a8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <p class="empty-text">Nenhuma página adicionada ainda. Registre seus arquivos HTML na lista do script.</p>
+                </div>
+
+                <div class="cards-grid" id="cardsContainer"></div>
+
+                <div class="viewer-container" id="contentViewer">
+                    <button class="btn-back" onclick="fecharConteudo()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        Voltar para os conteúdos
+                    </button>
+                    <iframe class="content-frame" id="quizFrame" src=""></iframe>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        /**
+         * ÁREA DO ADMINISTRADOR
+         * Configuração dos conteúdos e suas respectivas datas de lançamento.
+         */
+        const conteudosAdicionados = [
+            {
+                titulo: "Aula 01: Lógica com Python",
+                tipo: "Quiz",
+                data: "04/05/2026",
+                arquivo: "Santander1.html"
+            },
+            {
+                titulo: "Aula 02: Estruturas de Dados",
+                tipo: "Quiz",
+                data: "11/05/2026",
+                arquivo: "Santander2.html"
+            },
+            {
+                titulo: "Aula 03: Introdução ao Machine Learning",
+                tipo: "Quiz",
+                data: "18/05/2026",
+                arquivo: "Santander3.html"
+            }
+        ];
+
+        // Mapeamento de Elementos
+        const emptyState = document.getElementById('emptyState');
+        const cardsContainer = document.getElementById('cardsContainer');
+        const portalIntro = document.getElementById('portalIntro');
+        const contentViewer = document.getElementById('contentViewer');
+        const quizFrame = document.getElementById('quizFrame');
+
+        // Renderizar a listagem de cards
+        function inicializarPortal() {
+            if (conteudosAdicionados.length > 0) {
+                emptyState.style.display = 'none';
+                cardsContainer.style.display = 'grid';
+                cardsContainer.innerHTML = '';
+
+                conteudosAdicionados.forEach((conteudo) => {
+                    const cardHTML = `
+                        <div class="card" onclick="abrirConteudo('${conteudo.arquivo}')">
+                            <div class="card-header">
+                                <span class="card-tag">${conteudo.tipo}</span>
+                                <span class="card-date">${conteudo.data}</span>
+                            </div>
+                            <h3 class="card-title">${conteudo.titulo}</h3>
+                            <span class="card-action">
+                                Acessar conteúdo
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </span>
+                        </div>
+                    `;
+                    cardsContainer.innerHTML += cardHTML;
+                });
+            }
+        }
+
+        // Abrir conteúdo na mesma tela
+        function abrirConteudo(urlArquivo) {
+            portalIntro.style.display = 'none';
+            cardsContainer.style.display = 'none';
+            
+            quizFrame.src = urlArquivo;
+            contentViewer.style.display = 'flex';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Fechar conteúdo e retornar à listagem
+        function fecharConteudo() {
+            contentViewer.style.display = 'none';
+            quizFrame.src = ""; // Limpa o iframe para poupar memória
+            
+            portalIntro.style.display = 'block';
+            cardsContainer.style.display = 'grid';
+        }
+
+        // Inicializa o script
+        inicializarPortal();
+    </script>
+</body>
+</html>
