@@ -154,7 +154,6 @@
 
         // Renderizar a listagem de cards
         function inicializarPortal() {
-            // Garante que a URL sempre inicia limpa, sem o '#conteudo'
             if (window.location.hash === '#conteudo') {
                 history.replaceState(null, '', window.location.pathname);
             }
@@ -188,37 +187,38 @@
             portalIntro.style.display = 'none';
             cardsContainer.style.display = 'none';
             
-            quizFrame.src = urlArquivo;
             contentViewer.style.display = 'flex';
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            // NOVO: Empurra uma nova entrada para o histórico do navegador
+            // CORREÇÃO AQUI: Usar location.replace evita a inserção de históricos duplicados pelo iframe
+            quizFrame.contentWindow.location.replace(urlArquivo);
+
+            // Adiciona a navegação limpa na barra do navegador
             history.pushState({ view: 'conteudo' }, '', '#conteudo');
         }
 
-        // Fechar conteúdo via Botão (simulando a seta de voltar)
+        // Fechar conteúdo via Botão
         function fecharConteudo() {
             if (window.location.hash === '#conteudo') {
-                history.back(); // Isso ativa o popstate logo abaixo
+                history.back(); 
             } else {
                 executarFechamento();
             }
         }
 
         // A lógica visual de fechar e voltar aos cards
-        function executarFechamento() {
+        function ejecutarFechamento() {
             contentViewer.style.display = 'none';
-            quizFrame.src = ""; // Limpa a memória
+            quizFrame.contentWindow.location.replace('about:blank'); // Limpa sem quebrar o histórico
             
             portalIntro.style.display = 'block';
             cardsContainer.style.display = 'grid';
         }
 
-        // NOVO: Escuta quando o usuário clica na SETA DE VOLTAR DO NAVEGADOR ou celular
+        // Escuta a seta física de voltar do navegador ou celular
         window.addEventListener('popstate', function(event) {
-            // Se o usuário voltar e o '#conteudo' sumir da URL, fechamos o quiz
             if (window.location.hash !== '#conteudo') {
-                executarFechamento();
+                ejecutarFechamento();
             }
         });
 
