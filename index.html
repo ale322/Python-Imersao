@@ -110,7 +110,7 @@
 
                 <div class="viewer-container" id="contentViewer">
                     <button class="btn-back" onclick="fecharConteudo()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 5"></polyline></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                         Voltar para os conteúdos
                     </button>
                     <iframe class="content-frame" id="quizFrame" src=""></iframe>
@@ -129,7 +129,7 @@
                 titulo: "Aula 01: Lógica com Python",
                 tipo: "Quiz",
                 data: "04/05/2026",
-                arquivo: "santander1.html" /* Tudo minúsculo para evitar Erro 404 */
+                arquivo: "santander1.html"
             },
             {
                 titulo: "Aula 02: Estruturas de Dados",
@@ -188,7 +188,7 @@
             }
         }
 
-        // Abrir conteúdo na mesma tela (com sistema de histórico ativado)
+        // Abrir conteúdo na mesma tela (Com Rede de Segurança)
         function abrirConteudo(urlArquivo) {
             portalIntro.style.display = 'none';
             cardsContainer.style.display = 'none';
@@ -196,10 +196,13 @@
             contentViewer.style.display = 'flex';
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            // location.replace evita a inserção de históricos duplicados pelo iframe
-            quizFrame.contentWindow.location.replace(urlArquivo);
+            // Tenta usar o método avançado. Se o navegador bloquear (CORS de teste local), usa o src padrão.
+            try {
+                quizFrame.contentWindow.location.replace(urlArquivo);
+            } catch (error) {
+                quizFrame.src = urlArquivo;
+            }
 
-            // Adiciona a navegação limpa na barra do navegador
             history.pushState({ view: 'conteudo' }, '', '#conteudo');
         }
 
@@ -212,10 +215,15 @@
             }
         }
 
-        // A lógica visual de fechar e voltar aos cards (com 1 clique)
+        // Lógica visual de fechar e voltar aos cards
         function executarFechamento() {
             contentViewer.style.display = 'none';
-            quizFrame.contentWindow.location.replace('about:blank'); // Limpa sem quebrar o histórico
+            
+            try {
+                quizFrame.contentWindow.location.replace('about:blank');
+            } catch (error) {
+                quizFrame.removeAttribute('src');
+            }
             
             portalIntro.style.display = 'block';
             cardsContainer.style.display = 'grid';
