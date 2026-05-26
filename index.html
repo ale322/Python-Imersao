@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8"> 
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Imersão Santander 2026 - Área do Aluno</title>
     
@@ -110,7 +110,7 @@
 
                 <div class="viewer-container" id="contentViewer">
                     <button class="btn-back" onclick="fecharConteudo()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 5"></polyline></svg>
                         Voltar para os conteúdos
                     </button>
                     <iframe class="content-frame" id="quizFrame" src=""></iframe>
@@ -129,7 +129,7 @@
                 titulo: "Aula 01: Lógica com Python",
                 tipo: "Quiz",
                 data: "04/05/2026",
-                arquivo: "santander1.html"
+                arquivo: "santander1.html" /* Tudo minúsculo para evitar Erro 404 */
             },
             {
                 titulo: "Aula 02: Estruturas de Dados",
@@ -142,6 +142,12 @@
                 tipo: "Quiz",
                 data: "18/05/2026",
                 arquivo: "santander3.html"
+            },
+            {
+                titulo: "Aula 04: Análise de Dados e Pandas",
+                tipo: "Quiz",
+                data: "25/05/2026",
+                arquivo: "santander4.html"
             }
         ];
 
@@ -182,7 +188,7 @@
             }
         }
 
-        // Abrir conteúdo na mesma tela
+        // Abrir conteúdo na mesma tela (com sistema de histórico ativado)
         function abrirConteudo(urlArquivo) {
             portalIntro.style.display = 'none';
             cardsContainer.style.display = 'none';
@@ -190,7 +196,7 @@
             contentViewer.style.display = 'flex';
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            // CORREÇÃO AQUI: Usar location.replace evita a inserção de históricos duplicados pelo iframe
+            // location.replace evita a inserção de históricos duplicados pelo iframe
             quizFrame.contentWindow.location.replace(urlArquivo);
 
             // Adiciona a navegação limpa na barra do navegador
@@ -206,8 +212,8 @@
             }
         }
 
-        // A lógica visual de fechar e voltar aos cards
-        function ejecutarFechamento() {
+        // A lógica visual de fechar e voltar aos cards (com 1 clique)
+        function executarFechamento() {
             contentViewer.style.display = 'none';
             quizFrame.contentWindow.location.replace('about:blank'); // Limpa sem quebrar o histórico
             
@@ -218,7 +224,7 @@
         // Escuta a seta física de voltar do navegador ou celular
         window.addEventListener('popstate', function(event) {
             if (window.location.hash !== '#conteudo') {
-                ejecutarFechamento();
+                executarFechamento();
             }
         });
 
