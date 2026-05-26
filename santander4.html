@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - Aula 04: Análise de Dados e Pandas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            padding: 2rem 1rem;
+        }
+
+        .quiz-wrapper {
+            max-width: 48rem;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .header-title p {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .question-counter {
+            background-color: #eef2ff;
+            color: #4f46e5;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.625rem;
+            background-color: #e2e8f0;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #4f46e5;
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+            color: #1e293b;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 2px solid #e2e8f0;
+            background: white;
+            color: #334155;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #a5b4fc;
+            background-color: #eef2ff;
+        }
+
+        .option-btn.selected {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+            color: #3730a3;
+            box-shadow: 0 0 0 1px #4f46e5;
+        }
+
+        .option-btn.correct {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+            color: #166534;
+            box-shadow: 0 0 0 1px #22c55e;
+        }
+
+        .option-btn.incorrect {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+            color: #991b1b;
+            box-shadow: 0 0 0 1px #ef4444;
+        }
+
+        .option-btn.disabled-option {
+            border-color: #e2e8f0;
+            opacity: 0.5;
+            color: #64748b;
+            cursor: default;
+        }
+
+        .option-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Controls */
+        .controls-section {
+            border-top: 1px solid #f1f5f9;
+            padding-top: 1.5rem;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .hint-btn {
+            background: none;
+            border: none;
+            color: #4f46e5;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .hint-btn:hover {
+            color: #3730a3;
+        }
+
+        .confirm-btn, .next-btn {
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .confirm-btn {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .confirm-btn:hover:not(:disabled) {
+            background-color: #4338ca;
+        }
+
+        .confirm-btn:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .next-btn {
+            background-color: #0f172a;
+            color: white;
+        }
+
+        .next-btn:hover {
+            background-color: #1e293b;
+        }
+
+        /* Feedback Box */
+        .feedback-box {
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct-feedback {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+
+        .feedback-box.incorrect-feedback {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+
+        .feedback-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .correct-feedback .feedback-title {
+            color: #166534;
+        }
+
+        .incorrect-feedback .feedback-title {
+            color: #991b1b;
+        }
+
+        .feedback-rationale {
+            color: #334155;
+        }
+
+        .feedback-rationale span {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Hint Box */
+        .hint-box {
+            margin-top: 1rem;
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .hint-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            color: #d97706;
+        }
+
+        /* Results Screen */
+        .results-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .results-card {
+            background: white;
+            max-width: 42rem;
+            width: 100%;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid #f1f5f9;
+        }
+
+        .results-icon {
+            width: 6rem;
+            height: 6rem;
+            background-color: #eef2ff;
+            color: #4f46e5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .results-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #0f172a;
+        }
+
+        .results-subtitle {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        .results-score {
+            font-size: 3.75rem;
+            font-weight: 800;
+            color: #4f46e5;
+            margin-bottom: 1rem;
+        }
+
+        .results-score span {
+            font-size: 1.5rem;
+            color: #94a3b8;
+        }
+
+        .results-message {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .restart-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 1rem;
+        }
+
+        .restart-btn:hover {
+            background-color: #4338ca;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(0.25rem);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .question-text {
+                font-size: 1.1rem;
+            }
+
+            .controls-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .confirm-btn, .next-btn {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .question-counter {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // Dados do Quiz baseados na Aula 04
+        const quizData = [
+            {
+                question: "O que a função `len()` faz no Python, de acordo com a explicação do professor?",
+                options: [
+                    { text: "Gera uma sequência automática de números.", isCorrect: false, rationale: "Isso é feito pela função range()." },
+                    { text: "Mede a quantidade de coisas (elementos) dentro de uma lista.", isCorrect: true, rationale: "O professor explicou que 'len' serve para saber quantos elementos existem dentro de uma lista (por exemplo, a lista de professores)." },
+                    { text: "Importa a biblioteca Pandas para o código.", isCorrect: false, rationale: "A importação é feita com o comando 'import'." },
+                    { text: "Limpa a memória do interpretador Python.", isCorrect: false, rationale: "O 'len' apenas conta elementos, não altera ou limpa a memória." }
+                ],
+                hint: "Lembre-se da abreviação da palavra em inglês 'length', que significa comprimento."
+            },
+            {
+                question: "Por que é importante que as listas utilizadas (como 'professores' e 'disciplinas') tenham o mesmo comprimento?",
+                options: [
+                    { text: "Porque o Python não consegue rodar listas de tamanhos diferentes.", isCorrect: false, rationale: "O Python roda listas de diferentes tamanhos normalmente, o problema está na lógica da análise de dados." },
+                    { text: "Para evitar que o computador consuma muita memória RAM.", isCorrect: false, rationale: "O tamanho idêntico não tem a ver com otimização de memória." },
+                    { text: "Para que os elementos possam ser pareados por posição, garantindo que os dados da mesma linha se refiram ao mesmo registo.", isCorrect: true, rationale: "Em bancos de dados relacionais e na análise de dados, assumimos que as informações na mesma posição (índice) pertencem à mesma pessoa ou item." },
+                    { text: "Para que o Pandas consiga converter o código em um arquivo de áudio.", isCorrect: false, rationale: "Pandas lida com planilhas e dados estruturados, não áudios." }
+                ],
+                hint: "Pense em como as colunas do Excel funcionam e como as linhas mantêm os dados de uma pessoa juntos."
+            },
+            {
+                question: "Na programação em Python, qual número indica a primeira posição (índice) de uma lista?",
+                options: [
+                    { text: "Índice 1", isCorrect: false, rationale: "Embora contemos a partir do 1 no dia a dia, a linguagem Python funciona diferente." },
+                    { text: "Índice -1", isCorrect: false, rationale: "O índice -1 existe no Python, mas ele indica o ÚLTIMO elemento da lista." },
+                    { text: "Índice 0 (Zero)", isCorrect: true, rationale: "O professor frisou que em programação as posições das listas sempre começam a contar a partir do zero." },
+                    { text: "Índice 'A'", isCorrect: false, rationale: "Posições de listas tradicionais são dadas por números inteiros, não letras." }
+                ],
+                hint: "O professor comentou que isso 'às vezes dá uma confundida no pessoal' por não ser o número pelo qual costumamos começar a contar."
+            },
+            {
+                question: "O que o comando `for nome in professores:` faz na prática?",
+                options: [
+                    { text: "Cria uma nova lista chamada 'nome' e apaga a lista 'professores'.", isCorrect: false, rationale: "O 'for' é um laço de repetição, não um comando de exclusão ou criação isolada." },
+                    { text: "Faz com que a variável 'nome' assuma o valor de cada elemento dentro da lista 'professores', um de cada vez.", isCorrect: true, rationale: "O for itera pelos elementos, fazendo a variável assumir 'Danilo', depois 'Toninho', etc., em cada repetição." },
+                    { text: "Procura o texto 'nome' dentro do arquivo de dados.", isCorrect: false, rationale: "Isso seria uma função de busca ('find'), não um laço iterativo." },
+                    { text: "Transforma todos os itens da lista em letras maiúsculas.", isCorrect: false, rationale: "Apenas itera; para alterar o texto precisaríamos de métodos de string (como .upper())." }
+                ],
+                hint: "Ele serve para que o programa 'passe por cada coisa' dentro do conjunto."
+            },
+            {
+                question: "Qual foi o motivo para o professor trocar o 'for por elemento' pelo `for i in range(len(professores))`?",
+                options: [
+                    { text: "Porque o 'for por elemento' é uma função que foi descontinuada no Python.", isCorrect: false, rationale: "O for por elemento é amplamente usado e continua válido." },
+                    { text: "Para permitir o pareamento de duas listas diferentes ao mesmo tempo, usando a posição (índice) que é comum a ambas.", isCorrect: true, rationale: "Ao usar a posição (i), ele pôde pegar ao mesmo tempo o professor no índice 'i' e a disciplina no índice 'i'." },
+                    { text: "Porque a biblioteca Pandas obriga o uso exclusivo da função 'range'.", isCorrect: false, rationale: "O Pandas possui suas próprias formas de iteração, o professor estava apenas ensinando os fundamentos lógicos primeiro." },
+                    { text: "Para embaralhar os nomes de forma aleatória na tela.", isCorrect: false, rationale: "O 'range' gera números em ordem sequencial (0, 1, 2...), não de forma aleatória." }
+                ],
+                hint: "Lembre-se da necessidade de imprimir na tela 'O professor X ensina a disciplina Y'."
+            },
+            {
+                question: "O que é o Pandas introduzido na aula?",
+                options: [
+                    { text: "Um banco de dados idêntico ao SQL Server que deve ser instalado no servidor.", isCorrect: false, rationale: "Pandas é uma biblioteca de código para manipulação, não um SGBD completo de servidor." },
+                    { text: "Um comando nativo do Python para desenhar interfaces gráficas.", isCorrect: false, rationale: "Para interfaces gráficas usa-se bibliotecas como Tkinter, o Pandas foca nos dados em si." },
+                    { text: "Um mascote virtual utilizado como assistente de programação.", isCorrect: false, rationale: "Apesar do nome curioso, trata-se de uma ferramenta técnica de software." },
+                    { text: "Um framework (biblioteca) do Python usado para análise de dados, análogo ao uso de planilhas do Excel.", isCorrect: true, rationale: "O professor explicou que tudo que fazemos no Excel (filtros, agrupamentos, contas) pode ser feito no Python usando o Pandas de forma mais poderosa." }
+                ],
+                hint: "É a ferramenta principal que fará a ponte entre o código em Python e o mundo da Análise de Dados / Planilhas."
+            },
+            {
+                question: "Por que os programadores utilizam o comando `import pandas as pd`?",
+                options: [
+                    { text: "Para criar uma abreviação ('pd'), evitando ter de digitar a palavra 'pandas' inteira repetidas vezes no código.", isCorrect: true, rationale: "O 'as pd' é um atalho padrão na comunidade de ciência de dados para agilizar a escrita do código." },
+                    { text: "Porque 'pd' significa 'Python Data' e é o nome oficial do comando de leitura.", isCorrect: false, rationale: "O 'pd' é apenas um apelido definido no momento da importação." },
+                    { text: "Para converter automaticamente textos em números decimais.", isCorrect: false, rationale: "A importação apenas traz a biblioteca para o escopo do código." },
+                    { text: "Porque o Python só aceita importações de palavras que tenham no máximo 2 letras.", isCorrect: false, rationale: "O Python aceita qualquer tamanho de nome para importações." }
+                ],
+                hint: "É uma questão de conveniência e de poupar tempo no teclado."
+            },
+            {
+                question: "No contexto do Pandas, o que o comando `pd.DataFrame()` faz?",
+                options: [
+                    { text: "Envia os dados por e-mail automaticamente.", isCorrect: false, rationale: "Não tem funções nativas de disparo de e-mails." },
+                    { text: "Apaga os dados corrompidos da planilha.", isCorrect: false, rationale: "Para tratar dados nulos usam-se outros métodos do pandas, como dropna()." },
+                    { text: "Transforma os dados brutos (listas/dicionários) numa estrutura visual de tabela com linhas e colunas.", isCorrect: true, rationale: "O DataFrame é a estrutura fundamental do Pandas, enxergada como uma planilha do Excel dentro do Python." },
+                    { text: "Traduz os nomes das colunas de inglês para português.", isCorrect: false, rationale: "Não possui tradutor embutido." }
+                ],
+                hint: "Lembre-se da imagem que o professor mostrou na tela, onde o texto virou uma tabelinha organizada."
+            },
+            {
+                question: "Durante o código, o professor usou `print(f"O professor {professores[i]} ensina {disciplinas[i]}")`. Qual era o papel das chaves `{}` neste texto?",
+                options: [
+                    { text: "Elas indicam ao Python que o código deve ser ignorado ali.", isCorrect: false, rationale: "Comentários no Python são feitos com '#' e não com chaves na string." },
+                    { text: "Servem para multiplicar as duas variáveis matematicamente.", isCorrect: false, rationale: "Apenas acessam o valor; para multiplicar usaríamos o operador asterisco (*)." },
+                    { text: "Criar uma lista nova contendo as duas informações.", isCorrect: false, rationale: "As listas são criadas com colchetes [], as chaves neste contexto são para formatação." },
+                    { text: "Permitem injetar o valor da variável diretamente no meio do texto, graças ao uso da f-string (letra 'f' no início).", isCorrect: true, rationale: "As chaves marcam o local exato onde os valores dinâmicos das listas devem aparecer no texto." }
+                ],
+                hint: "É o que diferencia um texto estático comum de um texto que muda dependendo da variável lida."
+            },
+            {
+                question: "Por que o professor decidiu migrar do 'Online Python' para o 'Google Colab' para as próximas aulas?",
+                options: [
+                    { text: "Porque o Online Python passou a cobrar pelo uso.", isCorrect: false, rationale: "O professor não mencionou custos; foi uma decisão técnica." },
+                    { text: "Porque o Colab é o único que suporta a função print().", isCorrect: false, rationale: "A função print() é nativa da linguagem e funciona em qualquer ambiente." },
+                    { text: "Porque o Colab é mais amigável para análise de dados, já vem com bibliotecas instaladas e facilita o download de planilhas como o Excel.", isCorrect: true, rationale: "O professor teve uma leve dificuldade em gerar o download do arquivo .xlsx pelo Online Python e justificou que o Colab lida perfeitamente com esses módulos e arquivos." },
+                    { text: "Porque ele precisava usar a webcam dos alunos para monitorizar a aula.", isCorrect: false, rationale: "O Colab é uma ferramenta de programação, não de videoconferência." }
+                ],
+                hint: "Lembre-se do momento em que ele tentou salvar os carros no formato Excel e preferiu abrir o outro sistema."
+            }
+        ];
+
+        // State management
+        let state = {
+            currentQuestionIndex: 0,
+            selectedOption: null,
+            isAnswerConfirmed: false,
+            score: 0,
+            showResults: false,
+            showHint: false
+        };
+
+        function render() {
+            const app = document.getElementById('app');
+
+            if (state.showResults) {
+                app.innerHTML = renderResults();
+            } else {
+                app.innerHTML = renderQuiz();
+            }
+
+            attachEventListeners();
+        }
+
+        function renderResults() {
+            const percentage = Math.round((state.score / quizData.length) * 100);
+            let message = "";
+            if (percentage === 100) message = "Extraordinário! Compreendeu perfeitamente a lógica dos índices e a utilidade do Pandas.";
+            else if (percentage >= 70) message = "Muito bem! O caminho para a Análise de Dados está cada vez mais claro para si.";
+            else if (percentage >= 50) message = "Bom esforço! Mas vale a pena rever o funcionamento do for por índices.";
+            else message = "Não desista! A transição para dados exige um pouco mais de prática. Volte à aula e reveja o conceito de DataFrame.";
+
+            return `
+                <div class="results-container">
+                    <div class="results-card">
+                        <div class="results-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                        </div>
+                        <h2 class="results-title">Resultado do Teste</h2>
+                        <p class="results-subtitle">Análise de Dados e Pandas</p>
+                        
+                        <div class="results-score">
+                            ${state.score} <span>/ ${quizData.length}</span>
+                        </div>
+                        <p class="results-message">${message}</p>
+                        
+                        <button class="restart-btn" id="restartBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <polyline points="23 20 23 14 17 14"></polyline>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                            </svg>
+                            Refazer Teste
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderQuiz() {
+            const currentQuestion = quizData[state.currentQuestionIndex];
+            const progressWidth = ((state.currentQuestionIndex + 1) / quizData.length) * 100;
+
+            let optionsHTML = currentQuestion.options.map((option, index) => {
+                let btnClass = 'option-btn';
+                let iconHTML = '';
+
+                if (state.isAnswerConfirmed) {
+                    if (option.isCorrect) {
+                        btnClass += ' correct';
+                        iconHTML = `<svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+                    } else if (state.selectedOption === index) {
+                        btnClass += ' incorrect';
+                        iconHTML = `<svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+                    } else {
+                        btnClass += ' disabled-option';
+                    }
+                } else if (state.selectedOption === index) {
+                    btnClass += ' selected';
+                }
+
+                return `
+                    <button class="${btnClass}" data-index="${index}" ${state.isAnswerConfirmed ? 'disabled' : ''}>
+                        <span>${option.text}</span>
+                        ${iconHTML}
+                    </button>
+                `;
+            }).join('');
+
+            let controlsHTML = '';
+            if (!state.isAnswerConfirmed) {
+                controlsHTML = `
+                    <div class="controls-row">
+                        <button class="hint-btn" id="hintBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 18h6"></path>
+                                <path d="M10 22h4"></path>
+                                <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                            </svg>
+                            ${state.showHint ? 'Esconder Dica' : 'Ver Dica'}
+                        </button>
+                        <button class="confirm-btn" id="confirmBtn" ${state.selectedOption === null ? 'disabled' : ''}>
+                            Confirmar Resposta
+                        </button>
+                    </div>
+                `;
+            } else {
+                const selectedOpt = currentQuestion.options[state.selectedOption];
+                controlsHTML = `
+                    <div class="feedback-box ${selectedOpt.isCorrect ? 'correct-feedback' : 'incorrect-feedback'}">
+                        <h3 class="feedback-title">${selectedOpt.isCorrect ? '🎉 Resposta Correta!' : '❌ Resposta Incorreta'}</h3>
+                        <p class="feedback-rationale">
+                            <span>Explicação do Professor: </span>
+                            ${selectedOpt.rationale}
+                        </p>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button class="next-btn" id="nextBtn">
+                            ${state.currentQuestionIndex < quizData.length - 1 ? 'Próxima Pergunta' : 'Ver Resultado Final'}
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }
+
+            let hintHTML = '';
+            if (state.showHint && !state.isAnswerConfirmed) {
+                hintHTML = `
+                    <div class="hint-box">
+                        <svg class="hint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18h6"></path>
+                            <path d="M10 22h4"></path>
+                            <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                        </svg>
+                        <p>${currentQuestion.hint}</p>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="container">
+                    <div class="quiz-wrapper">
+                        <div class="header">
+                            <div class="header-top">
+                                <div class="header-title">
+                                    <h1>Aula 04: Análise de Dados e Pandas</h1>
+                                    <p>Trilha de IA e Dados</p>
+                                </div>
+                                <div class="question-counter">
+                                    Questão ${state.currentQuestionIndex + 1} de ${quizData.length}
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progressWidth}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="question-card">
+                            <h2 class="question-text">${currentQuestion.question}</h2>
+                            <div class="options-list">
+                                ${optionsHTML}
+                            </div>
+                            <div class="controls-section">
+                                ${controlsHTML}
+                                ${hintHTML}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function attachEventListeners() {
+            // Option buttons
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (state.isAnswerConfirmed) return;
+                    const index = parseInt(this.getAttribute('data-index'));
+                    state.selectedOption = index;
+                    render();
+                });
+            });
+
+            // Hint button
+            const hintBtn = document.getElementById('hintBtn');
+            if (hintBtn) {
+                hintBtn.addEventListener('click', () => {
+                    state.showHint = !state.showHint;
+                    render();
+                });
+            }
+
+            // Confirm button
+            const confirmBtn = document.getElementById('confirmBtn');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', () => {
+                    if (state.selectedOption === null) return;
+                    state.isAnswerConfirmed = true;
+                    const currentQuestion = quizData[state.currentQuestionIndex];
+                    if (currentQuestion.options[state.selectedOption].isCorrect) {
+                        state.score++;
+                    }
+                    render();
+                });
+            }
+
+            // Next button
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    if (state.currentQuestionIndex < quizData.length - 1) {
+                        state.currentQuestionIndex++;
+                        state.selectedOption = null;
+                        state.isAnswerConfirmed = false;
+                        state.showHint = false;
+                        render();
+                    } else {
+                        state.showResults = true;
+                        render();
+                    }
+                });
+            }
+
+            // Restart button
+            const restartBtn = document.getElementById('restartBtn');
+            if (restartBtn) {
+                restartBtn.addEventListener('click', () => {
+                    state.currentQuestionIndex = 0;
+                    state.selectedOption = null;
+                    state.isAnswerConfirmed = false;
+                    state.score = 0;
+                    state.showResults = false;
+                    state.showHint = false;
+                    render();
+                });
+            }
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
