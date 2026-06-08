@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - Aula 06: Filtros, Agrupamentos e Gráficos no Pandas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            padding: 2rem 1rem;
+        }
+
+        .quiz-wrapper {
+            max-width: 48rem;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .header-title p {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .question-counter {
+            background-color: #eef2ff;
+            color: #4f46e5;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.625rem;
+            background-color: #e2e8f0;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #4f46e5;
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+            color: #1e293b;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 2px solid #e2e8f0;
+            background: white;
+            color: #334155;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #a5b4fc;
+            background-color: #eef2ff;
+        }
+
+        .option-btn.selected {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+            color: #3730a3;
+            box-shadow: 0 0 0 1px #4f46e5;
+        }
+
+        .option-btn.correct {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+            color: #166534;
+            box-shadow: 0 0 0 1px #22c55e;
+        }
+
+        .option-btn.incorrect {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+            color: #991b1b;
+            box-shadow: 0 0 0 1px #ef4444;
+        }
+
+        .option-btn.disabled-option {
+            border-color: #e2e8f0;
+            opacity: 0.5;
+            color: #64748b;
+            cursor: default;
+        }
+
+        .option-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Controls */
+        .controls-section {
+            border-top: 1px solid #f1f5f9;
+            padding-top: 1.5rem;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .hint-btn {
+            background: none;
+            border: none;
+            color: #4f46e5;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .hint-btn:hover {
+            color: #3730a3;
+        }
+
+        .confirm-btn, .next-btn {
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .confirm-btn {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .confirm-btn:hover:not(:disabled) {
+            background-color: #4338ca;
+        }
+
+        .confirm-btn:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .next-btn {
+            background-color: #0f172a;
+            color: white;
+        }
+
+        .next-btn:hover {
+            background-color: #1e293b;
+        }
+
+        /* Feedback Box */
+        .feedback-box {
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct-feedback {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+
+        .feedback-box.incorrect-feedback {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+
+        .feedback-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .correct-feedback .feedback-title {
+            color: #166534;
+        }
+
+        .incorrect-feedback .feedback-title {
+            color: #991b1b;
+        }
+
+        .feedback-rationale {
+            color: #334155;
+        }
+
+        .feedback-rationale span {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Hint Box */
+        .hint-box {
+            margin-top: 1rem;
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .hint-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            color: #d97706;
+        }
+
+        /* Results Screen */
+        .results-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .results-card {
+            background: white;
+            max-width: 42rem;
+            width: 100%;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid #f1f5f9;
+        }
+
+        .results-icon {
+            width: 6rem;
+            height: 6rem;
+            background-color: #eef2ff;
+            color: #4f46e5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .results-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #0f172a;
+        }
+
+        .results-subtitle {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        .results-score {
+            font-size: 3.75rem;
+            font-weight: 800;
+            color: #4f46e5;
+            margin-bottom: 1rem;
+        }
+
+        .results-score span {
+            font-size: 1.5rem;
+            color: #94a3b8;
+        }
+
+        .results-message {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .restart-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 1rem;
+        }
+
+        .restart-btn:hover {
+            background-color: #4338ca;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(0.25rem);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .question-text {
+                font-size: 1.1rem;
+            }
+
+            .controls-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .confirm-btn, .next-btn {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .question-counter {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // Dados do Quiz baseados na Aula 06
+        const quizData = [
+            {
+                question: "Qual foi o motivo prático apontado pelo professor para usar o comando `import pandas as pd`?",
+                options: [
+                    { text: "Serve para instalar a biblioteca automaticamente no Google Colab.", isCorrect: false, rationale: "O Pandas já vem instalado no Colab. O import serve apenas para chamá-lo no código atual." },
+                    { text: "Atribui o apelido (alias) 'pd' ao Pandas, para economizar digitação sempre que precisar usar a biblioteca.", isCorrect: true, rationale: "O professor ressaltou que esse é um padrão forte na comunidade para não precisar escrever a palavra inteira toda hora." },
+                    { text: "É obrigatório para converter arquivos PDF em Excel.", isCorrect: false, rationale: "PD remete a Pandas, não tem relação com o formato de arquivo PDF." },
+                    { text: "Garante que os dados fiquem visíveis na tela automaticamente.", isCorrect: false, rationale: "A visualização depende de chamar a variável, não do import." }
+                ],
+                hint: "Pense na palavra 'as' como 'como' ou 'apelido'."
+            },
+            {
+                question: "Que instrução do Pandas deve ser utilizada para ler uma planilha que já existe no computador?",
+                options: [
+                    { text: "pd.import_sheet()", isCorrect: false, rationale: "Esse comando não é nativo do Pandas." },
+                    { text: "pd.load_excel()", isCorrect: false, rationale: "Embora 'load' signifique carregar, a sintaxe oficial é outra." },
+                    { text: "pd.open_table()", isCorrect: false, rationale: "Comando inválido." },
+                    { text: "pd.read_excel()", isCorrect: true, rationale: "O professor associou o termo em inglês 'read' com a ação de ler os dados no formato Excel." }
+                ],
+                hint: "Qual verbo em inglês traduz a ação de 'ler'?"
+            },
+            {
+                question: "Por que usamos duplos colchetes ao selecionar mais de uma coluna no Pandas, como em `dados[['modelo', 'ano']]`?",
+                options: [
+                    { text: "Para realizar um filtro condicional baseado em texto.", isCorrect: false, rationale: "Filtros condicionais usam os nomes das colunas com operadores (>, <, ==)." },
+                    { text: "Para ordenar as colunas alfabeticamente.", isCorrect: false, rationale: "A ordem das colunas será a ordem que você passar dentro da lista." },
+                    { text: "Trata-se de uma exigência da sintaxe do Pandas: o primeiro colchete acessa os dados, o segundo define que estamos a passar uma lista de colunas.", isCorrect: true, rationale: "O professor frisou que, para mais de uma coluna, você precisa passar uma lista, o que justifica os colchetes extras." },
+                    { text: "Porque os dados provêm de duas abas diferentes da mesma planilha.", isCorrect: false, rationale: "A seleção ocorre na mesma aba que foi lida." }
+                ],
+                hint: "O professor referiu-se a isso como uma 'questão de sintaxe' quando pedimos múltiplas coisas."
+            },
+            {
+                question: "O que o Python executa silenciosamente quando fazemos um filtro como `dados[dados['quilometragem'] < 50000]`?",
+                options: [
+                    { text: "Soma os valores até atingir o limite estipulado.", isCorrect: false, rationale: "Trata-se de uma seleção, não de uma agregação cumulativa." },
+                    { text: "Um loop `for` invisível que analisa linha a linha para verificar se a condição é verdadeira.", isCorrect: true, rationale: "O professor demonstrou que o Pandas poupa-nos de escrever o longo código com 'for' e 'if', fazendo esse trabalho interno." },
+                    { text: "Apaga os carros mais antigos do arquivo original Excel.", isCorrect: false, rationale: "A planilha física não é alterada por uma operação de filtro no código." },
+                    { text: "Calcula o menor valor da coluna quilometragem.", isCorrect: false, rationale: "Isso seria alcançado com a função .min()." }
+                ],
+                hint: "Recorde a demonstração em que o professor escreveu várias linhas de código para imitar o comportamento de uma só linha do Pandas."
+            },
+            {
+                question: "Ao tentar analisar a coluna de preços, por que surgiu um erro quando o professor escreveu `dados['preço']` com cedilha?",
+                options: [
+                    { text: "A coluna no arquivo original Excel estava escrita sem cedilha ('preco'), e o Python procura correspondências exatas.", isCorrect: true, rationale: "Foi um erro de sintaxe derivado de um erro de digitação (typo). O Pandas não interpreta caracteres aproximados." },
+                    { text: "O Google Colab não suporta caracteres com acentuação ou cedilhas.", isCorrect: false, rationale: "Caracteres especiais são plenamente suportados dentro de strings (textos)." },
+                    { text: "A planilha estava protegida contra leitura.", isCorrect: false, rationale: "Se estivesse protegida, nem seria possível carregá-la inicialmente." },
+                    { text: "O comando estava incompleto e exigia a indicação de formato numérico.", isCorrect: false, rationale: "O erro indicou expressamente que a chave não foi encontrada." }
+                ],
+                hint: "Se procurares uma chave que não existe exatamente igual na fechadura, ela não vai abrir."
+            },
+            {
+                question: "Qual o efeito prático de utilizar o método `.unique()` numa coluna como 'marca'?",
+                options: [
+                    { text: "Mostra todos os valores misturados em ordem aleatória.", isCorrect: false, rationale: "Não altera a ordem por acaso." },
+                    { text: "Devolve uma lista apenas com as marcas que aparecem, sem repetir nomes duplicados.", isCorrect: true, rationale: "O objetivo é saber quais são os valores 'únicos', independentemente de quantas vezes se repetem." },
+                    { text: "Exclui as marcas que possuem apenas um carro na tabela.", isCorrect: false, rationale: "Pelo contrário, ele garante que cada marca presente seja mostrada ao menos e apenas uma vez." },
+                    { text: "Calcula quantos carros existem de cada marca.", isCorrect: false, rationale: "Essa contagem é feita pelo método .value_counts()." }
+                ],
+                hint: "A tradução da palavra refere-se a algo singular, que não se repete."
+            },
+            {
+                question: "Como o professor ensinou a exportar o resultado de um filtro (variável `dados_filtrados`) para um novo arquivo Excel no computador?",
+                options: [
+                    { text: ".make_excel()", isCorrect: false, rationale: "Comando inválido." },
+                    { text: ".export_table()", isCorrect: false, rationale: "Não é o comando nativo usado na aula." },
+                    { text: ".save_as_xls()", isCorrect: false, rationale: "Comando inválido." },
+                    { text: ".to_excel('nome_do_arquivo.xlsx')", isCorrect: true, rationale: "A sintaxe natural do Pandas para exportação segue a preposição 'to' (para), convertendo o dado da memória num ficheiro físico." }
+                ],
+                hint: "É a operação inversa da leitura, utilizando a preposição 'para' em inglês."
+            },
+            {
+                question: "Que funcionalidade foi destacada ao apresentar o comando `.value_counts()`?",
+                options: [
+                    { text: "Ele soma todos os valores monetários de uma vez.", isCorrect: false, rationale: "Para realizar somas usa-se .sum()." },
+                    { text: "Ele conta a frequência com que cada valor distinto aparece na coluna (ex: quantos manuais e automáticos).", isCorrect: true, rationale: "O professor utilizou-o para contabilizar rapidamente a distribuição entre categorias, como os tipos de câmbio." },
+                    { text: "Ele calcula a média aritmética.", isCorrect: false, rationale: "Para a média usamos a função .mean()." },
+                    { text: "Ele revela quantas células estão vazias.", isCorrect: false, rationale: "Isso seria verificado com .isna().sum()." }
+                ],
+                hint: "A tradução remete para a ação de 'contabilizar os valores'."
+            },
+            {
+                question: "O que o cálculo `.mean()` executa sobre uma coluna de dados no Pandas?",
+                options: [
+                    { text: "Acha o valor mínimo.", isCorrect: false, rationale: "A função correspondente seria .min()." },
+                    { text: "Acha o valor mediano.", isCorrect: false, rationale: "A função correspondente seria .median()." },
+                    { text: "Obtém o valor máximo registado.", isCorrect: false, rationale: "A função correspondente seria .max()." },
+                    { text: "Calcula a média aritmética, ou seja, a soma dividida pela quantidade.", isCorrect: true, rationale: "O professor alertou repetidamente para não confundirmos a pronúncia de 'mean' (média) com a palavra mínimo." }
+                ],
+                hint: "Atenção ao aviso do professor sobre a confusão com a palavra 'mínimo'."
+            },
+            {
+                question: "Para analisar os dados comparando categorias distintas, a aula introduziu o comando `.groupby()`. Qual a sua função?",
+                options: [
+                    { text: "Elimina as repetições e esconde os dados das categorias menores.", isCorrect: false, rationale: "O comando agrupa sem apagar dados." },
+                    { text: "Agrupa as informações baseadas numa categoria (ex: câmbio) para permitir cálculos coletivos em cada grupo.", isCorrect: true, rationale: "O professor agrupou por câmbio e depois pediu a quilometragem média de cada grupo separado, um conceito herdado das bases de dados (SQL)." },
+                    { text: "Muda a cor das linhas agrupadas para facilitar a visualização no Excel.", isCorrect: false, rationale: "O agrupamento é puramente analítico e matemático, não altera o estilo visual do ficheiro." },
+                    { text: "Mescla todas as colunas num único grande bloco de texto.", isCorrect: false, rationale: "As colunas mantêm a sua independência lógica após o agrupamento." }
+                ],
+                hint: "É a ação de separar em 'pastas' diferentes antes de fazer as contas."
+            }
+        ];
+
+        // State management
+        let state = {
+            currentQuestionIndex: 0,
+            selectedOption: null,
+            isAnswerConfirmed: false,
+            score: 0,
+            showResults: false,
+            showHint: false
+        };
+
+        function render() {
+            const app = document.getElementById('app');
+
+            if (state.showResults) {
+                app.innerHTML = renderResults();
+            } else {
+                app.innerHTML = renderQuiz();
+            }
+
+            attachEventListeners();
+        }
+
+        function renderResults() {
+            const percentage = Math.round((state.score / quizData.length) * 100);
+            let message = "";
+            if (percentage === 100) message = "Extraordinário! Compreendeu perfeitamente a manipulação de dados com Pandas.";
+            else if (percentage >= 70) message = "Muito bem! O seu domínio sobre os comandos e filtros está sólido.";
+            else if (percentage >= 50) message = "Bom esforço! Mas vale a pena rever os comandos de agrupamento e exportação do Pandas.";
+            else message = "Não desanime! A transição para dados exige um pouco mais de prática. Reveja os comandos de read_excel e filtragem.";
+
+            return `
+                <div class="results-container">
+                    <div class="results-card">
+                        <div class="results-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                        </div>
+                        <h2 class="results-title">Resultado do Teste</h2>
+                        <p class="results-subtitle">Filtros, Agrupamentos e Gráficos no Pandas</p>
+                        
+                        <div class="results-score">
+                            ${state.score} <span>/ ${quizData.length}</span>
+                        </div>
+                        <p class="results-message">${message}</p>
+                        
+                        <button class="restart-btn" id="restartBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <polyline points="23 20 23 14 17 14"></polyline>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                            </svg>
+                            Refazer Teste
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderQuiz() {
+            const currentQuestion = quizData[state.currentQuestionIndex];
+            const progressWidth = ((state.currentQuestionIndex + 1) / quizData.length) * 100;
+
+            let optionsHTML = currentQuestion.options.map((option, index) => {
+                let btnClass = 'option-btn';
+                let iconHTML = '';
+
+                if (state.isAnswerConfirmed) {
+                    if (option.isCorrect) {
+                        btnClass += ' correct';
+                        iconHTML = `<svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+                    } else if (state.selectedOption === index) {
+                        btnClass += ' incorrect';
+                        iconHTML = `<svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+                    } else {
+                        btnClass += ' disabled-option';
+                    }
+                } else if (state.selectedOption === index) {
+                    btnClass += ' selected';
+                }
+
+                return `
+                    <button class="${btnClass}" data-index="${index}" ${state.isAnswerConfirmed ? 'disabled' : ''}>
+                        <span>${option.text}</span>
+                        ${iconHTML}
+                    </button>
+                `;
+            }).join('');
+
+            let controlsHTML = '';
+            if (!state.isAnswerConfirmed) {
+                controlsHTML = `
+                    <div class="controls-row">
+                        <button class="hint-btn" id="hintBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 18h6"></path>
+                                <path d="M10 22h4"></path>
+                                <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                            </svg>
+                            ${state.showHint ? 'Esconder Dica' : 'Ver Dica'}
+                        </button>
+                        <button class="confirm-btn" id="confirmBtn" ${state.selectedOption === null ? 'disabled' : ''}>
+                            Confirmar Resposta
+                        </button>
+                    </div>
+                `;
+            } else {
+                const selectedOpt = currentQuestion.options[state.selectedOption];
+                controlsHTML = `
+                    <div class="feedback-box ${selectedOpt.isCorrect ? 'correct-feedback' : 'incorrect-feedback'}">
+                        <h3 class="feedback-title">${selectedOpt.isCorrect ? '🎉 Resposta Correta!' : '❌ Resposta Incorreta'}</h3>
+                        <p class="feedback-rationale">
+                            <span>Explicação do Professor: </span>
+                            ${selectedOpt.rationale}
+                        </p>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button class="next-btn" id="nextBtn">
+                            ${state.currentQuestionIndex < quizData.length - 1 ? 'Próxima Pergunta' : 'Ver Resultado Final'}
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }
+
+            let hintHTML = '';
+            if (state.showHint && !state.isAnswerConfirmed) {
+                hintHTML = `
+                    <div class="hint-box">
+                        <svg class="hint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18h6"></path>
+                            <path d="M10 22h4"></path>
+                            <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                        </svg>
+                        <p>${currentQuestion.hint}</p>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="container">
+                    <div class="quiz-wrapper">
+                        <div class="header">
+                            <div class="header-top">
+                                <div class="header-title">
+                                    <h1>Aula 06: Filtros, Agrupamentos e Gráficos no Pandas</h1>
+                                    <p>Trilha de IA e Dados</p>
+                                </div>
+                                <div class="question-counter">
+                                    Questão ${state.currentQuestionIndex + 1} de ${quizData.length}
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progressWidth}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="question-card">
+                            <h2 class="question-text">${currentQuestion.question}</h2>
+                            <div class="options-list">
+                                ${optionsHTML}
+                            </div>
+                            <div class="controls-section">
+                                ${controlsHTML}
+                                ${hintHTML}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function attachEventListeners() {
+            // Option buttons
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (state.isAnswerConfirmed) return;
+                    const index = parseInt(this.getAttribute('data-index'));
+                    state.selectedOption = index;
+                    render();
+                });
+            });
+
+            // Hint button
+            const hintBtn = document.getElementById('hintBtn');
+            if (hintBtn) {
+                hintBtn.addEventListener('click', () => {
+                    state.showHint = !state.showHint;
+                    render();
+                });
+            }
+
+            // Confirm button
+            const confirmBtn = document.getElementById('confirmBtn');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', () => {
+                    if (state.selectedOption === null) return;
+                    state.isAnswerConfirmed = true;
+                    const currentQuestion = quizData[state.currentQuestionIndex];
+                    if (currentQuestion.options[state.selectedOption].isCorrect) {
+                        state.score++;
+                    }
+                    render();
+                });
+            }
+
+            // Next button
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    if (state.currentQuestionIndex < quizData.length - 1) {
+                        state.currentQuestionIndex++;
+                        state.selectedOption = null;
+                        state.isAnswerConfirmed = false;
+                        state.showHint = false;
+                        render();
+                    } else {
+                        state.showResults = true;
+                        render();
+                    }
+                });
+            }
+
+            // Restart button
+            const restartBtn = document.getElementById('restartBtn');
+            if (restartBtn) {
+                restartBtn.addEventListener('click', () => {
+                    state.currentQuestionIndex = 0;
+                    state.selectedOption = null;
+                    state.isAnswerConfirmed = false;
+                    state.score = 0;
+                    state.showResults = false;
+                    state.showHint = false;
+                    render();
+                });
+            }
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
