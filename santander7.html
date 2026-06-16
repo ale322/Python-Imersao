@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - Aula 07: Análise de Dados e IA com Pandas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            padding: 2rem 1rem;
+        }
+
+        .quiz-wrapper {
+            max-width: 48rem;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .header-title p {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .question-counter {
+            background-color: #eef2ff;
+            color: #4f46e5;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.625rem;
+            background-color: #e2e8f0;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #4f46e5;
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+            color: #1e293b;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 2px solid #e2e8f0;
+            background: white;
+            color: #334155;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #a5b4fc;
+            background-color: #eef2ff;
+        }
+
+        .option-btn.selected {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+            color: #3730a3;
+            box-shadow: 0 0 0 1px #4f46e5;
+        }
+
+        .option-btn.correct {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+            color: #166534;
+            box-shadow: 0 0 0 1px #22c55e;
+        }
+
+        .option-btn.incorrect {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+            color: #991b1b;
+            box-shadow: 0 0 0 1px #ef4444;
+        }
+
+        .option-btn.disabled-option {
+            border-color: #e2e8f0;
+            opacity: 0.5;
+            color: #64748b;
+            cursor: default;
+        }
+
+        .option-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Controls */
+        .controls-section {
+            border-top: 1px solid #f1f5f9;
+            padding-top: 1.5rem;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .hint-btn {
+            background: none;
+            border: none;
+            color: #4f46e5;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .hint-btn:hover {
+            color: #3730a3;
+        }
+
+        .confirm-btn, .next-btn {
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .confirm-btn {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .confirm-btn:hover:not(:disabled) {
+            background-color: #4338ca;
+        }
+
+        .confirm-btn:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .next-btn {
+            background-color: #0f172a;
+            color: white;
+        }
+
+        .next-btn:hover {
+            background-color: #1e293b;
+        }
+
+        /* Feedback Box */
+        .feedback-box {
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct-feedback {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+
+        .feedback-box.incorrect-feedback {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+
+        .feedback-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .correct-feedback .feedback-title {
+            color: #166534;
+        }
+
+        .incorrect-feedback .feedback-title {
+            color: #991b1b;
+        }
+
+        .feedback-rationale {
+            color: #334155;
+        }
+
+        .feedback-rationale span {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Hint Box */
+        .hint-box {
+            margin-top: 1rem;
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .hint-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            color: #d97706;
+        }
+
+        /* Results Screen */
+        .results-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .results-card {
+            background: white;
+            max-width: 42rem;
+            width: 100%;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid #f1f5f9;
+        }
+
+        .results-icon {
+            width: 6rem;
+            height: 6rem;
+            background-color: #eef2ff;
+            color: #4f46e5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .results-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #0f172a;
+        }
+
+        .results-subtitle {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        .results-score {
+            font-size: 3.75rem;
+            font-weight: 800;
+            color: #4f46e5;
+            margin-bottom: 1rem;
+        }
+
+        .results-score span {
+            font-size: 1.5rem;
+            color: #94a3b8;
+        }
+
+        .results-message {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .restart-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 1rem;
+        }
+
+        .restart-btn:hover {
+            background-color: #4338ca;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(0.25rem);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .question-text {
+                font-size: 1.1rem;
+            }
+
+            .controls-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .confirm-btn, .next-btn {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .question-counter {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // Dados do Quiz baseados na Aula 07
+        const quizData = [
+            {
+                question: "Qual foi a vantagem citada pelo professor ao conectar o Google Drive diretamente ao Google Colab para carregar o arquivo do Enem?",
+                options: [
+                    { text: "Ele traduz os dados para o português automaticamente.", isCorrect: false, rationale: "O Drive não faz traduções automáticas de planilhas de dados." },
+                    { text: "O arquivo era muito grande (centenas de megabytes) e fazer o upload manual pelo Colab demoraria demais e consumiria muita memória.", isCorrect: true, rationale: "O professor explicou que planilhas pesadas, com milhares de linhas, são lidas muito mais rapidamente se já estiverem hospedadas no Drive." },
+                    { text: "Isso permite usar SQL em vez de Pandas.", isCorrect: false, rationale: "O Pandas continuou sendo usado via `pd.read_csv`." },
+                    { text: "Foi a única forma de obter um gráfico de pizza.", isCorrect: false, rationale: "A origem do arquivo não afeta o tipo de gráfico gerado." }
+                ],
+                hint: "Pense no que acontece quando tenta enviar um ficheiro enorme do seu computador para um site na internet."
+            },
+            {
+                question: "Na função de leitura `pd.read_csv()`, qual foi a importância de adicionar o parâmetro `sep=';'`?",
+                options: [
+                    { text: "Ele separa a tabela em vários arquivos menores.", isCorrect: false, rationale: "A leitura não divide arquivos, apenas carrega para a memória." },
+                    { text: "Ele indica ao Pandas que as colunas do arquivo estão separadas por ponto e vírgula, corrigindo erros de formatação na leitura.", isCorrect: true, rationale: "Por padrão, o CSV lê valores separados por vírgula (Comma Separated Values). Quando é outro símbolo, é preciso declarar explicitamente." },
+                    { text: "Ele impede que o arquivo seja modificado acidentalmente.", isCorrect: false, rationale: "A leitura (read) é segura por padrão e não altera o arquivo original." },
+                    { text: "Ele transforma textos em números para facilitar os cálculos matemáticos.", isCorrect: false, rationale: "O parâmetro `sep` não converte os tipos de dados das colunas." }
+                ],
+                hint: "CSV significa 'Comma Separated Values'. O que acontece quando os valores são separados por outro sinal?"
+            },
+            {
+                question: "O que o método `.dropna()` efetua num DataFrame do Pandas?",
+                options: [
+                    { text: "Elimina todas as linhas que contenham algum dado vazio ou faltante (NaN) em pelo menos uma das colunas.", isCorrect: true, rationale: "O professor mostrou que isso limpa a base de dados de informações incompletas que podem enviesar a análise." },
+                    { text: "Apaga as linhas duplicadas na base de dados.", isCorrect: false, rationale: "Para remover duplicados usa-se `.drop_duplicates()`." },
+                    { text: "Limpa os cabeçalhos das colunas.", isCorrect: false, rationale: "Apenas atua nas linhas dos dados, não nos nomes das colunas." },
+                    { text: "Elimina dados que são menores que zero.", isCorrect: false, rationale: "Para isso seria necessário utilizar um filtro lógico com operadores maiores e menores." }
+                ],
+                hint: "A sílaba 'na' vem de NaN (Not a Number), usado para representar ausência de valor."
+            },
+            {
+                question: "Ao tentar gerar um gráfico com os candidatos por Estado usando barras, qual foi o principal desafio de visualização identificado?",
+                options: [
+                    { text: "O Python não conseguia gerar gráficos com mais de 10 barras simultaneamente.", isCorrect: false, rationale: "As bibliotecas do Python desenham tantas barras quantas existirem nos dados." },
+                    { text: "O estado de Minas Gerais possuía uma quantidade de candidatos tão gigante que 'esmagava' as barras dos outros estados, tornando-os invisíveis.", isCorrect: true, rationale: "Como MG tinha mais de 83 mil candidatos e outros estados apenas dezenas ou centenas, a escala linear não permitia ver a variação nos estados menores." },
+                    { text: "O gráfico de barras apagou os estados que começavam com vogais.", isCorrect: false, rationale: "Não existe esse tipo de bug na visualização de dados." },
+                    { text: "O nome dos estados era demasiado longo para caber no eixo.", isCorrect: false, rationale: "O problema central era a escala dos valores numéricos, não o tamanho dos textos das siglas." }
+                ],
+                hint: "Pense na diferença entre colocar um prédio de 100 andares ao lado de uma casa de bonecas no mesmo desenho."
+            },
+            {
+                question: "Como o professor corrigiu o problema da desproporção enorme entre os valores dos Estados no gráfico de barras?",
+                options: [
+                    { text: "Aplicando uma escala logarítmica no eixo, o que permitiu visualizar potências de 10 e comparar ordens de grandeza num mesmo espaço visual.", isCorrect: true, rationale: "A escala logarítmica sobe em saltos multiplicativos (10, 100, 1000, 100000...), permitindo que as barras pequenas e as gigantes convivam de forma legível." },
+                    { text: "Removendo manualmente os dados de Minas Gerais do gráfico.", isCorrect: false, rationale: "A solução adotada manteve todos os dados, apenas ajustou a régua de medição (escala)." },
+                    { text: "Substituindo o gráfico de barras por um gráfico de pizza.", isCorrect: false, rationale: "Ele provou logo a seguir que o gráfico de pizza seria ainda pior para este cenário." },
+                    { text: "Dividindo todos os valores numéricos por dois.", isCorrect: false, rationale: "Uma divisão simples não resolveria o abismo proporcional entre milhares e dezenas." }
+                ],
+                hint: "A solução envolveu um conceito matemático em que o eixo Y sobe em 'degraus' multiplicativos (ex: dezenas, centenas, milhares)."
+            },
+            {
+                question: "Por que motivo um gráfico de pizza (`plot.pie()`) foi considerado a pior escolha para exibir a distribuição de candidatos de todos os estados?",
+                options: [
+                    { text: "Porque os gráficos de pizza não suportam cores diferentes.", isCorrect: false, rationale: "A biblioteca encarrega-se de colorir as fatias automaticamente." },
+                    { text: "Porque as fatias devem sempre somar mais do que 100%.", isCorrect: false, rationale: "As fatias de pizza somam exatamente 100%." },
+                    { text: "Porque a biblioteca Matplotlib proíbe o uso de gráficos circulares.", isCorrect: false, rationale: "Eles existem na biblioteca, mas nem sempre são a melhor solução." },
+                    { text: "Porque a 'fatia' de Minas Gerais (83.000) engoliria o gráfico inteiro, impossibilitando a visualização e interpretação das 'fatias' dos outros 26 estados.", isCorrect: true, rationale: "Um gráfico de pizza mostra fatias lineares proporcionais ao todo. Com uma discrepância tão severa, as fatias menores tornam-se traços invisíveis." }
+                ],
+                hint: "Imagine cortar um bolo onde uma pessoa leva 99% e as outras 26 pessoas dividem o 1% restante."
+            },
+            {
+                question: "Na construção do gráfico final, para que serviu o comando `figsize=(20, 10)`?",
+                options: [
+                    { text: "Para determinar a quantidade máxima e mínima de barras.", isCorrect: false, rationale: "Não filtra dados." },
+                    { text: "Para alterar o tamanho físico da figura gerada na tela (largura e altura).", isCorrect: true, rationale: "O professor aumentou a figura para que todos os dados e legendas tivessem espaço suficiente e ficassem mais legíveis." },
+                    { text: "Para somar 20 e 10 aos valores plotados.", isCorrect: false, rationale: "É um ajuste estético do quadro onde o gráfico é desenhado, não um operador aritmético dos dados." },
+                    { text: "Para alterar as cores de fundo do gráfico.", isCorrect: false, rationale: "As dimensões (size) não interagem com paletas de cores." }
+                ],
+                hint: "Traduzindo a palavra 'figsize': 'figure size' (tamanho da figura)."
+            },
+            {
+                question: "Durante a análise exploratória, qual foi a lógica de programação utilizada para separar os candidatos que 'faltaram' à prova?",
+                options: [
+                    { text: "Utilizou um filtro que selecionava os candidatos cuja nota de redação estava vazia/ausente.", isCorrect: true, rationale: "No Enem, se não há entrega de nota na redação, o candidato foi desclassificado ou faltou, logo essa coluna serviu como critério identificador." },
+                    { text: "Pesquisou no Google o nome de cada aluno.", isCorrect: false, rationale: "As informações da análise devem sempre emergir do próprio conjunto de dados (Dataset)." },
+                    { text: "Olhou para a coluna de atrasos e filtrou pelos que chegaram 10 minutos tarde.", isCorrect: false, rationale: "Não havia tal métrica de atrasos no excerto fornecido." },
+                    { text: "Sortearam-se candidatos aleatórios para formar a amostra de faltas.", isCorrect: false, rationale: "A análise de dados baseia-se em métricas reais (notas ausentes) e não em sorteios." }
+                ],
+                hint: "Pense na única secção da prova que é obrigatória ter nota e onde uma nota em branco dita a ausência total."
+            },
+            {
+                question: "Ao descobrir que cerca de 60% dos candidatos que faltaram à prova eram mulheres, qual foi a conclusão analítica retirada pelo professor?",
+                options: [
+                    { text: "Concluiu que as mulheres são as que mais desistem da prova.", isCorrect: false, rationale: "Isso seria olhar para um dado isolado sem o comparar ao todo, caindo num viés estatístico clássico." },
+                    { text: "Considerou que havia um erro crasso no carregamento da base de dados e recomeçou a aula.", isCorrect: false, rationale: "Os dados refletiam a realidade da planilha perfeitamente." },
+                    { text: "Concluiu que este dado isolado não significa maior desistência feminina, visto que as mulheres já representavam 60% do total de inscritos, sendo assim uma proporção perfeitamente normal.", isCorrect: true, rationale: "Este é o núcleo da Ciência de Dados: comparar a amostra filtrada com o padrão populacional. Se 60% de todos os presentes eram mulheres, é estatisticamente natural que 60% dos faltantes também o fossem." },
+                    { text: "Sugeriu a construção de provas separadas por gênero.", isCorrect: false, rationale: "Uma análise tão drástica seria infundada e discriminatória, além de não responder à matemática dos dados apresentados." }
+                ],
+                hint: "Se uma caixa tem 60 bolas azuis e 40 vermelhas, e tiramos 10 bolas às cegas, o normal não é tirar mais bolas azuis?"
+            },
+            {
+                question: "Que discrepância estatística real o professor encontrou ao analisar os dados daqueles que faltaram divididos pelo tipo de escola (Pública vs. Privada)?",
+                options: [
+                    { text: "Descobriu que os alunos de escolas privadas faltavam muito mais para ir trabalhar.", isCorrect: false, rationale: "Os dados estatísticos mostraram precisamente a tendência contrária na taxa de faltas." },
+                    { text: "Identificou que 86% dos alunos que faltaram eram da escola pública, embora representassem apenas 72% dos presentes, revelando uma dificuldade desproporcional neste grupo e levantando hipóteses de políticas públicas.", isCorrect: true, rationale: "Aqui reside o verdadeiro insight de Data Science: descobrir por que um grupo específico (Público) falta acima da sua proporção demográfica normal e especular as barreiras socioeconômicas causadoras." },
+                    { text: "Concluiu que não havia qualquer distinção percentual entre públicas e particulares.", isCorrect: false, rationale: "Existia um desvio notável entre a proporção normal (72%) e a proporção de faltas (86%)." },
+                    { text: "Percebeu que as notas de Matemática afetam as escolas privadas.", isCorrect: false, rationale: "A análise feita foi relativa à taxa de abstenções, não à variação de notas de Matemática." }
+                ],
+                hint: "Pense na reflexão social lançada na aula sobre quem pode não ter dinheiro para o ônibus ou quem precisa trabalhar aos sábados."
+            }
+        ];
+
+        // State management
+        let state = {
+            currentQuestionIndex: 0,
+            selectedOption: null,
+            isAnswerConfirmed: false,
+            score: 0,
+            showResults: false,
+            showHint: false
+        };
+
+        function render() {
+            const app = document.getElementById('app');
+
+            if (state.showResults) {
+                app.innerHTML = renderResults();
+            } else {
+                app.innerHTML = renderQuiz();
+            }
+
+            attachEventListeners();
+        }
+
+        function renderResults() {
+            const percentage = Math.round((state.score / quizData.length) * 100);
+            let message = "";
+            if (percentage === 100) message = "Extraordinário! Compreendeu de forma exímia a visualização e interpretação de dados.";
+            else if (percentage >= 70) message = "Muito bem! O seu domínio sobre os gráficos e os insights de dados está forte.";
+            else if (percentage >= 50) message = "Bom esforço! Mas vale a pena rever por que razão uma escala logarítmica é necessária.";
+            else message = "Não desanime! A ciência de dados envolve perspicácia estatística. Reveja a diferença entre proporção e valor absoluto.";
+
+            return `
+                <div class="results-container">
+                    <div class="results-card">
+                        <div class="results-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                        </div>
+                        <h2 class="results-title">Resultado do Teste</h2>
+                        <p class="results-subtitle">Análise de Dados e IA com Pandas</p>
+                        
+                        <div class="results-score">
+                            ${state.score} <span>/ ${quizData.length}</span>
+                        </div>
+                        <p class="results-message">${message}</p>
+                        
+                        <button class="restart-btn" id="restartBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <polyline points="23 20 23 14 17 14"></polyline>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                            </svg>
+                            Refazer Teste
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderQuiz() {
+            const currentQuestion = quizData[state.currentQuestionIndex];
+            const progressWidth = ((state.currentQuestionIndex + 1) / quizData.length) * 100;
+
+            let optionsHTML = currentQuestion.options.map((option, index) => {
+                let btnClass = 'option-btn';
+                let iconHTML = '';
+
+                if (state.isAnswerConfirmed) {
+                    if (option.isCorrect) {
+                        btnClass += ' correct';
+                        iconHTML = `<svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+                    } else if (state.selectedOption === index) {
+                        btnClass += ' incorrect';
+                        iconHTML = `<svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+                    } else {
+                        btnClass += ' disabled-option';
+                    }
+                } else if (state.selectedOption === index) {
+                    btnClass += ' selected';
+                }
+
+                return `
+                    <button class="${btnClass}" data-index="${index}" ${state.isAnswerConfirmed ? 'disabled' : ''}>
+                        <span>${option.text}</span>
+                        ${iconHTML}
+                    </button>
+                `;
+            }).join('');
+
+            let controlsHTML = '';
+            if (!state.isAnswerConfirmed) {
+                controlsHTML = `
+                    <div class="controls-row">
+                        <button class="hint-btn" id="hintBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 18h6"></path>
+                                <path d="M10 22h4"></path>
+                                <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                            </svg>
+                            ${state.showHint ? 'Esconder Dica' : 'Ver Dica'}
+                        </button>
+                        <button class="confirm-btn" id="confirmBtn" ${state.selectedOption === null ? 'disabled' : ''}>
+                            Confirmar Resposta
+                        </button>
+                    </div>
+                `;
+            } else {
+                const selectedOpt = currentQuestion.options[state.selectedOption];
+                controlsHTML = `
+                    <div class="feedback-box ${selectedOpt.isCorrect ? 'correct-feedback' : 'incorrect-feedback'}">
+                        <h3 class="feedback-title">${selectedOpt.isCorrect ? '🎉 Resposta Correta!' : '❌ Resposta Incorreta'}</h3>
+                        <p class="feedback-rationale">
+                            <span>Explicação do Professor: </span>
+                            ${selectedOpt.rationale}
+                        </p>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button class="next-btn" id="nextBtn">
+                            ${state.currentQuestionIndex < quizData.length - 1 ? 'Próxima Pergunta' : 'Ver Resultado Final'}
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }
+
+            let hintHTML = '';
+            if (state.showHint && !state.isAnswerConfirmed) {
+                hintHTML = `
+                    <div class="hint-box">
+                        <svg class="hint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18h6"></path>
+                            <path d="M10 22h4"></path>
+                            <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                        </svg>
+                        <p>${currentQuestion.hint}</p>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="container">
+                    <div class="quiz-wrapper">
+                        <div class="header">
+                            <div class="header-top">
+                                <div class="header-title">
+                                    <h1>Aula 07: Análise de Dados e IA com Pandas</h1>
+                                    <p>Trilha de IA e Dados</p>
+                                </div>
+                                <div class="question-counter">
+                                    Questão ${state.currentQuestionIndex + 1} de ${quizData.length}
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progressWidth}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="question-card">
+                            <h2 class="question-text">${currentQuestion.question}</h2>
+                            <div class="options-list">
+                                ${optionsHTML}
+                            </div>
+                            <div class="controls-section">
+                                ${controlsHTML}
+                                ${hintHTML}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function attachEventListeners() {
+            // Option buttons
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (state.isAnswerConfirmed) return;
+                    const index = parseInt(this.getAttribute('data-index'));
+                    state.selectedOption = index;
+                    render();
+                });
+            });
+
+            // Hint button
+            const hintBtn = document.getElementById('hintBtn');
+            if (hintBtn) {
+                hintBtn.addEventListener('click', () => {
+                    state.showHint = !state.showHint;
+                    render();
+                });
+            }
+
+            // Confirm button
+            const confirmBtn = document.getElementById('confirmBtn');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', () => {
+                    if (state.selectedOption === null) return;
+                    state.isAnswerConfirmed = true;
+                    const currentQuestion = quizData[state.currentQuestionIndex];
+                    if (currentQuestion.options[state.selectedOption].isCorrect) {
+                        state.score++;
+                    }
+                    render();
+                });
+            }
+
+            // Next button
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    if (state.currentQuestionIndex < quizData.length - 1) {
+                        state.currentQuestionIndex++;
+                        state.selectedOption = null;
+                        state.isAnswerConfirmed = false;
+                        state.showHint = false;
+                        render();
+                    } else {
+                        state.showResults = true;
+                        render();
+                    }
+                });
+            }
+
+            // Restart button
+            const restartBtn = document.getElementById('restartBtn');
+            if (restartBtn) {
+                restartBtn.addEventListener('click', () => {
+                    state.currentQuestionIndex = 0;
+                    state.selectedOption = null;
+                    state.isAnswerConfirmed = false;
+                    state.score = 0;
+                    state.showResults = false;
+                    state.showHint = false;
+                    render();
+                });
+            }
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
