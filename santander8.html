@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - Aula 08: Histogramas, IA e Comparação de Dados</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            padding: 2rem 1rem;
+        }
+
+        .quiz-wrapper {
+            max-width: 48rem;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .header-title p {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .question-counter {
+            background-color: #eef2ff;
+            color: #4f46e5;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.625rem;
+            background-color: #e2e8f0;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #4f46e5;
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+            color: #1e293b;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 2px solid #e2e8f0;
+            background: white;
+            color: #334155;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #a5b4fc;
+            background-color: #eef2ff;
+        }
+
+        .option-btn.selected {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+            color: #3730a3;
+            box-shadow: 0 0 0 1px #4f46e5;
+        }
+
+        .option-btn.correct {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+            color: #166534;
+            box-shadow: 0 0 0 1px #22c55e;
+        }
+
+        .option-btn.incorrect {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+            color: #991b1b;
+            box-shadow: 0 0 0 1px #ef4444;
+        }
+
+        .option-btn.disabled-option {
+            border-color: #e2e8f0;
+            opacity: 0.5;
+            color: #64748b;
+            cursor: default;
+        }
+
+        .option-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Controls */
+        .controls-section {
+            border-top: 1px solid #f1f5f9;
+            padding-top: 1.5rem;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .hint-btn {
+            background: none;
+            border: none;
+            color: #4f46e5;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .hint-btn:hover {
+            color: #3730a3;
+        }
+
+        .confirm-btn, .next-btn {
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .confirm-btn {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .confirm-btn:hover:not(:disabled) {
+            background-color: #4338ca;
+        }
+
+        .confirm-btn:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .next-btn {
+            background-color: #0f172a;
+            color: white;
+        }
+
+        .next-btn:hover {
+            background-color: #1e293b;
+        }
+
+        /* Feedback Box */
+        .feedback-box {
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct-feedback {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+
+        .feedback-box.incorrect-feedback {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+
+        .feedback-title {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .correct-feedback .feedback-title {
+            color: #166534;
+        }
+
+        .incorrect-feedback .feedback-title {
+            color: #991b1b;
+        }
+
+        .feedback-rationale {
+            color: #334155;
+        }
+
+        .feedback-rationale span {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        /* Hint Box */
+        .hint-box {
+            margin-top: 1rem;
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .hint-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            color: #d97706;
+        }
+
+        /* Results Screen */
+        .results-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .results-card {
+            background: white;
+            max-width: 42rem;
+            width: 100%;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid #f1f5f9;
+        }
+
+        .results-icon {
+            width: 6rem;
+            height: 6rem;
+            background-color: #eef2ff;
+            color: #4f46e5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .results-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #0f172a;
+        }
+
+        .results-subtitle {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        .results-score {
+            font-size: 3.75rem;
+            font-weight: 800;
+            color: #4f46e5;
+            margin-bottom: 1rem;
+        }
+
+        .results-score span {
+            font-size: 1.5rem;
+            color: #94a3b8;
+        }
+
+        .results-message {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .restart-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 1rem;
+        }
+
+        .restart-btn:hover {
+            background-color: #4338ca;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(0.25rem);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .question-text {
+                font-size: 1.1rem;
+            }
+
+            .controls-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .confirm-btn, .next-btn {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .question-counter {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // Dados do Quiz baseados na Aula 08
+        const quizData = [
+            {
+                question: "Ao lidar com erros de formatação na leitura nativa do CSV pelo Pandas, que função do Python o professor aplicou para separar as strings num conjunto de elementos?",
+                options: [
+                    { text: ".join()", isCorrect: false, rationale: "O método `.join()` faz o oposto: une os elementos de uma lista numa única string." },
+                    { text: ".split(';')", isCorrect: true, rationale: "O professor utilizou a função `.split()` para dividir o bloco de texto massivo em partes independentes, cortando o texto sempre que encontrava o ponto e vírgula." },
+                    { text: ".cut()", isCorrect: false, rationale: "O comando `.cut()` existe no Pandas, mas serve para categorizar valores contínuos em intervalos, não para separar strings em listas." },
+                    { text: ".slice()", isCorrect: false, rationale: "O método correto para dividir o texto pelos separadores é o `.split()`." }
+                ],
+                hint: "A tradução deste comando é 'dividir' ou 'fender'."
+            },
+            {
+                question: "No processo de criação do DataFrame linha a linha, qual foi a responsabilidade da função `zip()`?",
+                options: [
+                    { text: "Comprimir o arquivo CSV para ocupar menos espaço no Google Drive.", isCorrect: false, rationale: "Na programação Python, `.zip()` não tem a função de compressão de arquivos tipo WinZIP." },
+                    { text: "Criptografar as informações sensíveis dos candidatos (anonimização).", isCorrect: false, rationale: "A criptografia e a anonimização fazem-se com outros algoritmos (ex: Hash)." },
+                    { text: "Efetuar o pareamento (parzinho) entre a lista com o nome das colunas e a lista com os dados do candidato, unindo as chaves aos respetivos valores.", isCorrect: true, rationale: "O professor explicou que o `zip()` atua como um fecho de correr, alinhando o índice 0 das colunas com o índice 0 dos dados, o índice 1 com o índice 1, e assim por diante." },
+                    { text: "Eliminar linhas duplicadas no banco de dados.", isCorrect: false, rationale: "A eliminação de dados repetidos faz-se através do comando `.drop_duplicates()`." }
+                ],
+                hint: "Pense na palavra como o fecho de um casaco que entrelaça dois lados independentes de forma emparelhada."
+            },
+            {
+                question: "Por que motivo o professor adicionou o comando `import matplotlib.pyplot as plt` no decorrer da análise?",
+                options: [
+                    { text: "Para permitir que o Python executasse fórmulas matemáticas complexas sem causar erros.", isCorrect: false, rationale: "Cálculos matemáticos complexos são do domínio da biblioteca `numpy` ou da biblioteca `math`." },
+                    { text: "Para habilitar a criação, visualização e formatação de gráficos no ecrã (como histogramas e barras).", isCorrect: true, rationale: "O Matplotlib é a principal ferramenta do ecossistema Python para a geração de plots (gráficos) e representações visuais dos dados." },
+                    { text: "Para enviar o código automaticamente para os alunos via chat.", isCorrect: false, rationale: "A biblioteca serve para representações visuais (gráficos)." },
+                    { text: "Para corrigir falhas de segurança no Google Colab.", isCorrect: false, rationale: "Não tem qualquer relação com segurança ou correção de falhas de ambiente." }
+                ],
+                hint: "A palavra 'plot' em inglês remete a plotar ou desenhar gráficos."
+            },
+            {
+                question: "Para evidenciar de forma clara o volume de alunos que tiraram cada nota, que tipo de gráfico o professor utilizou para mostrar as notas públicas vs privadas?",
+                options: [
+                    { text: "Gráfico de Linha", isCorrect: false, rationale: "O gráfico de linha é ideal para mostrar a evolução de uma variável ao longo do tempo (séries temporais)." },
+                    { text: "Gráfico de Pizza", isCorrect: false, rationale: "O professor já havia descartado o uso de gráficos de pizza em aulas anteriores para bases com grandes variações." },
+                    { text: "Histograma", isCorrect: true, rationale: "O professor analisou o pico de aglomeração de notas através do histograma, em que o eixo Y determinava a quantidade de pessoas e o eixo X o valor da nota tirada." },
+                    { text: "Gráfico de Dispersão (Scatter Plot)", isCorrect: false, rationale: "O scatter plot serve para procurar correlações entre duas variáveis soltas no eixo XY." }
+                ],
+                hint: "É um gráfico de barras coladas que indica a distribuição de frequência dos dados agrupados num intervalo."
+            },
+            {
+                question: "No histograma original de comparação das notas, por que o gráfico de escolas públicas parecia esmagar o gráfico de escolas privadas em altura?",
+                options: [
+                    { text: "Porque as notas das escolas públicas eram dezenas de vezes mais altas (melhores).", isCorrect: false, rationale: "A altura do histograma representava a quantidade de pessoas, e não a qualidade da nota." },
+                    { text: "Devido ao número absoluto discrepante: havia muito mais alunos inscritos da rede pública, originando picos de contagem (eixo Y) infinitamente mais altos.", isCorrect: true, rationale: "O professor frisou que havia cerca de 108 mil candidatos de escolas públicas contra 16 mil das privadas. Naturalmente, a montanha de dados do público cobriria o privado." },
+                    { text: "Porque o Python inverteu a ordem de renderização por culpa da cedilha.", isCorrect: false, rationale: "A renderização ocorreu sem erros de acentuação nesse passo." },
+                    { text: "Porque alunos da rede privada estavam ausentes da base de dados do INEP.", isCorrect: false, rationale: "Havia milhares de alunos da rede privada no ficheiro, apenas existiam em menor quantidade total." }
+                ],
+                hint: "A altura da curva do histograma refletia a pura contagem demográfica antes de serem aplicadas as correções."
+            },
+            {
+                question: "Como o professor nivelou o campo de visualização no histograma para permitir uma comparação justa da curva de notas entre escolas públicas e privadas?",
+                options: [
+                    { text: "Apagando aleatoriamente milhares de alunos da escola pública até as bases estarem com o mesmo tamanho.", isCorrect: false, rationale: "A exclusão de dados destrói a amostra real e falsifica a análise." },
+                    { text: "Através da adição do parâmetro `density=True`, que normalizou os dados da contagem bruta para uma escala de densidade percentual.", isCorrect: true, rationale: "O professor usou a 'Density' (Densidade) para nivelar as curvas ao valor do '100% de cada grupo', isolando a forma da curva independentemente do volume total de alunos de cada segmento." },
+                    { text: "Adicionando o parâmetro `logy=True` usado nos gráficos de barras da aula anterior.", isCorrect: false, rationale: "A escala logarítmica ajustaria o tamanho visual do eixo Y, mas não resolveria a necessidade de comparar a curva em formato percentual normalizado." },
+                    { text: "Pintando as barras com cores neutras.", isCorrect: false, rationale: "A cor das barras é meramente estética e não impacta a correção de discrepâncias estatísticas." }
+                ],
+                hint: "Em estatística, quando não comparamos volume bruto, comparamos a proporção, a DENSIDADE."
+            },
+            {
+                question: "O que a análise final e nivelada dos histogramas revelou sobre a realidade das notas entre alunos do setor público e privado?",
+                options: [
+                    { text: "Que o perfil de ambos os gráficos é idêntico e sobreposto, provando o pleno sucesso do sistema público.", isCorrect: false, rationale: "Os gráficos exibiam formas bastante diferentes e desviadas." },
+                    { text: "Evidenciou uma discrepância clara e inequívoca, em que o pico das notas das escolas privadas rondava os 700 pontos, contrapondo os cerca de 500 pontos do topo da curva do ensino público.", isCorrect: true, rationale: "O professor utilizou a Ciência de Dados para expor visualmente o gap socioeducativo. Se os sistemas fossem equivalentes, as montanhas dos gráficos (as distribuições) seriam simétricas e estariam sobrepostas." },
+                    { text: "Mostrou que os alunos de escolas públicas tiraram, na média, 300 pontos a mais do que a rede privada.", isCorrect: false, rationale: "A estatística exibiu precisamente o inverso." },
+                    { text: "Revelou que todos os candidatos sem exceção chumbaram a prova.", isCorrect: false, rationale: "Houve imensos dados populacionais registados num amplo espetro (da esquerda para a direita no eixo X)." }
+                ],
+                hint: "Ao analisar a imagem na aula, um dos gráficos tinha um pico mais próximo da esquerda (valores baixos), enquanto o outro tendia mais para a direita (valores altos)."
+            },
+            {
+                question: "Durante a aula, como o professor demonstrou ser possível gerar um gráfico super complexo de 'notas ponderadas em função da idade' sem digitar linhas infindáveis de código?",
+                options: [
+                    { text: "Ligou para um engenheiro sénior da Google no meio da gravação para redigir o código.", isCorrect: false, rationale: "O processo ocorreu integralmente em tela por ação do professor." },
+                    { text: "Descarregou um pacote fechado na Dark Web.", isCorrect: false, rationale: "Utilizou-se a infraestrutura tecnológica legal e segura." },
+                    { text: "Procurou num livro antigo a sintaxe matemática.", isCorrect: false, rationale: "Usou um método moderno de interação através de linguagem humana." },
+                    { text: "Utilizou a Inteligência Artificial (Gemini) integrada no ambiente do Colab, fornecendo-lhe o prompt em linguagem natural para que ela escrevesse o código executável.", isCorrect: true, rationale: "Ele exemplificou o uso corporativo das IAs contemporâneas: você diz o que precisa em texto e a IA constrói e entrega a sintaxe do Matplotlib perfeita num clique." }
+                ],
+                hint: "Aproveitou as capacidades da nova tecnologia emergente do último ano que estava embutida no próprio ecrã do Google Colab."
+            },
+            {
+                question: "De acordo com o professor, que função adorada no Microsoft Excel é plenamente substituída e de forma muito mais rápida pelo comando `.value_counts()` do Pandas?",
+                options: [
+                    { text: "Macro do VBA", isCorrect: false, rationale: "Os Macros servem para automação de tarefas rotineiras na interface do Excel." },
+                    { text: "As famosas Tabelas Dinâmicas (Pivot Tables).", isCorrect: true, rationale: "Ele comparou que a ação de resumir, categorizar dados cruzados e contar volumes que é feita na Tabela Dinâmica do Excel é exatamente a premissa resolvida milissegundos pelo comando `value_counts()` do Python." },
+                    { text: "A função SOMA().", isCorrect: false, rationale: "No Pandas a soma direta corresponde à função `.sum()`." },
+                    { text: "A coloração condicional de células.", isCorrect: false, rationale: "Formatações condicionais estéticas não são cobertas pela função de contagem de valores." }
+                ],
+                hint: "É aquela ferramenta do Excel usada num menu lateral em que você arrasta caixinhas para cruzar informações ou somar quantidades."
+            },
+            {
+                question: "Como o professor aconselhou que os gráficos e 'insights' extraídos do Colab podem ser integrados no mundo real de um profissional de dados corporativo?",
+                options: [
+                    { text: "Gravando a imagem gerada (por exemplo, via `.savefig()`) como PNG/JPG e colando-a diretamente em relatórios em formato PDF ou em apresentações para os chefes e as diretorias.", isCorrect: true, rationale: "O professor recomendou que a função final dos gráficos é materializarem-se em peças de análise humana partilháveis com os líderes." },
+                    { text: "Imprimindo na impressora e guardando na gaveta.", isCorrect: false, rationale: "Na época digital os dashboards são distribuídos informaticamente." },
+                    { text: "Transformando o Python num jogo para celular.", isCorrect: false, rationale: "Esta aula lida puramente com Data Analytics." },
+                    { text: "Não têm uso prático corporativo, sendo restritos ao estudo universitário.", isCorrect: false, rationale: "Ele enfatizou durante os dois meses inteiros que isso se reflete diretamente na rotina diária e profissional nas corporações." }
+                ],
+                hint: "O que faria com uma fotografia importante que comprovasse algo à sua direção no mundo empresarial?"
+            }
+        ];
+
+        // State management
+        let state = {
+            currentQuestionIndex: 0,
+            selectedOption: null,
+            isAnswerConfirmed: false,
+            score: 0,
+            showResults: false,
+            showHint: false
+        };
+
+        function render() {
+            const app = document.getElementById('app');
+
+            if (state.showResults) {
+                app.innerHTML = renderResults();
+            } else {
+                app.innerHTML = renderQuiz();
+            }
+
+            attachEventListeners();
+        }
+
+        function renderResults() {
+            const percentage = Math.round((state.score / quizData.length) * 100);
+            let message = "";
+            if (percentage === 100) message = "Extraordinário! Concluiu com mestria a Trilha de Análise de Dados.";
+            else if (percentage >= 70) message = "Muito bem! Tem um excelente domínio estatístico e visualização do Pandas.";
+            else if (percentage >= 50) message = "Bom esforço! Mas deve rever a interpretação dos gráficos de normalização (Density).";
+            else message = "Não desista agora! Reveja as explicações do professor sobre as diferenças dos Histogramas e as utilidades da IA Generativa aliada à análise de dados.";
+
+            return `
+                <div class="results-container">
+                    <div class="results-card">
+                        <div class="results-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                        </div>
+                        <h2 class="results-title">Resultado do Teste</h2>
+                        <p class="results-subtitle">Histogramas, IA e Comparação de Dados</p>
+                        
+                        <div class="results-score">
+                            ${state.score} <span>/ ${quizData.length}</span>
+                        </div>
+                        <p class="results-message">${message}</p>
+                        
+                        <button class="restart-btn" id="restartBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <polyline points="23 20 23 14 17 14"></polyline>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                            </svg>
+                            Refazer Teste
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderQuiz() {
+            const currentQuestion = quizData[state.currentQuestionIndex];
+            const progressWidth = ((state.currentQuestionIndex + 1) / quizData.length) * 100;
+
+            let optionsHTML = currentQuestion.options.map((option, index) => {
+                let btnClass = 'option-btn';
+                let iconHTML = '';
+
+                if (state.isAnswerConfirmed) {
+                    if (option.isCorrect) {
+                        btnClass += ' correct';
+                        iconHTML = `<svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+                    } else if (state.selectedOption === index) {
+                        btnClass += ' incorrect';
+                        iconHTML = `<svg class="option-icon" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+                    } else {
+                        btnClass += ' disabled-option';
+                    }
+                } else if (state.selectedOption === index) {
+                    btnClass += ' selected';
+                }
+
+                return `
+                    <button class="${btnClass}" data-index="${index}" ${state.isAnswerConfirmed ? 'disabled' : ''}>
+                        <span>${option.text}</span>
+                        ${iconHTML}
+                    </button>
+                `;
+            }).join('');
+
+            let controlsHTML = '';
+            if (!state.isAnswerConfirmed) {
+                controlsHTML = `
+                    <div class="controls-row">
+                        <button class="hint-btn" id="hintBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 18h6"></path>
+                                <path d="M10 22h4"></path>
+                                <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                            </svg>
+                            ${state.showHint ? 'Esconder Dica' : 'Ver Dica'}
+                        </button>
+                        <button class="confirm-btn" id="confirmBtn" ${state.selectedOption === null ? 'disabled' : ''}>
+                            Confirmar Resposta
+                        </button>
+                    </div>
+                `;
+            } else {
+                const selectedOpt = currentQuestion.options[state.selectedOption];
+                controlsHTML = `
+                    <div class="feedback-box ${selectedOpt.isCorrect ? 'correct-feedback' : 'incorrect-feedback'}">
+                        <h3 class="feedback-title">${selectedOpt.isCorrect ? '🎉 Resposta Correta!' : '❌ Resposta Incorreta'}</h3>
+                        <p class="feedback-rationale">
+                            <span>Explicação do Professor: </span>
+                            ${selectedOpt.rationale}
+                        </p>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button class="next-btn" id="nextBtn">
+                            ${state.currentQuestionIndex < quizData.length - 1 ? 'Próxima Pergunta' : 'Ver Resultado Final'}
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }
+
+            let hintHTML = '';
+            if (state.showHint && !state.isAnswerConfirmed) {
+                hintHTML = `
+                    <div class="hint-box">
+                        <svg class="hint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18h6"></path>
+                            <path d="M10 22h4"></path>
+                            <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                        </svg>
+                        <p>${currentQuestion.hint}</p>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="container">
+                    <div class="quiz-wrapper">
+                        <div class="header">
+                            <div class="header-top">
+                                <div class="header-title">
+                                    <h1>Aula 08: Histogramas, IA e Comparação de Dados</h1>
+                                    <p>Trilha de IA e Dados</p>
+                                </div>
+                                <div class="question-counter">
+                                    Questão ${state.currentQuestionIndex + 1} de ${quizData.length}
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progressWidth}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="question-card">
+                            <h2 class="question-text">${currentQuestion.question}</h2>
+                            <div class="options-list">
+                                ${optionsHTML}
+                            </div>
+                            <div class="controls-section">
+                                ${controlsHTML}
+                                ${hintHTML}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function attachEventListeners() {
+            // Option buttons
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (state.isAnswerConfirmed) return;
+                    const index = parseInt(this.getAttribute('data-index'));
+                    state.selectedOption = index;
+                    render();
+                });
+            });
+
+            // Hint button
+            const hintBtn = document.getElementById('hintBtn');
+            if (hintBtn) {
+                hintBtn.addEventListener('click', () => {
+                    state.showHint = !state.showHint;
+                    render();
+                });
+            }
+
+            // Confirm button
+            const confirmBtn = document.getElementById('confirmBtn');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', () => {
+                    if (state.selectedOption === null) return;
+                    state.isAnswerConfirmed = true;
+                    const currentQuestion = quizData[state.currentQuestionIndex];
+                    if (currentQuestion.options[state.selectedOption].isCorrect) {
+                        state.score++;
+                    }
+                    render();
+                });
+            }
+
+            // Next button
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    if (state.currentQuestionIndex < quizData.length - 1) {
+                        state.currentQuestionIndex++;
+                        state.selectedOption = null;
+                        state.isAnswerConfirmed = false;
+                        state.showHint = false;
+                        render();
+                    } else {
+                        state.showResults = true;
+                        render();
+                    }
+                });
+            }
+
+            // Restart button
+            const restartBtn = document.getElementById('restartBtn');
+            if (restartBtn) {
+                restartBtn.addEventListener('click', () => {
+                    state.currentQuestionIndex = 0;
+                    state.selectedOption = null;
+                    state.isAnswerConfirmed = false;
+                    state.score = 0;
+                    state.showResults = false;
+                    state.showHint = false;
+                    render();
+                });
+            }
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
